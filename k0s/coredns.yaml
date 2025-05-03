@@ -58,7 +58,7 @@ data:
 #            10.10.10.10 asghar.spoof
 #            fallthrough
 #        }
-    }
+#    }
     .:53 {
         errors
         health

@@ -1,6 +1,6 @@
 # CtlBreeze
 
-**CtlBreeze** is a declarative Kubernetes deployment designed for minimal maintenance and airgap environments. It leverages [k0s](https://k0sproject.io/) and `k0sctl` for cluster provisioning and upgrades, ensuring an easy and automated setup.
+**CtlBreeze** is a declarative Kubernetes deployment designed for minimal maintenance and airgap environments. It leverages [k0s](https://k0sproject.io/) and [k0sctl](https://github.com/k0sproject/k0sctl) for cluster provisioning and upgrades, ensuring an easy and automated setup.
 
 ---
 

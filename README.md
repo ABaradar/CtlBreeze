@@ -188,7 +188,7 @@ MicroCeph is a snap‑packaged, minimal‑ops distribution of Ceph that makes it
     sudo ceph status
     ```
 
-    You should see all MONs, MGRs, and OSDs reporting `HEALTH_OK`. ([microk8s.io](https://microk8s.io/))
+    You should see all MONs, MGRs, and OSDs reporting `HEALTH_OK`. ([Canonical](https://canonical-microceph.readthedocs-hosted.com/en/squid-stable/how-to/multi-node/#check-microceph-status))
 
 ### 3. Create pool and credential to consume ceph in kubernetes
 

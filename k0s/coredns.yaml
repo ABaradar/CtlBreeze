@@ -55,7 +55,7 @@ data:
   Corefile: |
 #    example.spoof:53 {
 #        hosts {
-#            10.10.10.10 asghar.spoof
+#            10.10.10.10 example.spoof
 #            fallthrough
 #        }
 #    }

@@ -1,0 +1,228 @@
+apiVersion: k0sctl.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: k0s-cluster
+  user: admin
+spec:
+  hosts:
+  - ssh:
+      address: <master 1 ip>
+      user: <user>
+      port: 22
+      keyPath: ~/.ssh/id_rsa
+    role: controller
+    installFlags:
+    - --disable-components=coredns
+    - --disable-components=autopilot
+    - --disable-components=windows-node
+    uploadBinary: true
+    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: enp0s3
+    files:
+      - name: bundle-file
+        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755
+      - name: coredns-manifest
+        src: ./coredns.yaml
+        dstDir: /var/lib/k0s/manifests/coredns/
+        perm: 0644
+        user: root
+        group: root
+  - ssh:
+      address: <master 2 ip>
+      user: <user>
+      port: 22
+      keyPath: ~/.ssh/id_rsa
+    role: controller
+    installFlags:
+    - --disable-components=coredns
+    - --disable-components=autopilot
+    - --disable-components=windows-node
+    uploadBinary: true
+    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: enp0s3
+    files:
+      - name: bundle-file
+        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755
+      - name: coredns-manifest
+        src: ./coredns.yaml
+        dstDir: /var/lib/k0s/manifests/coredns/
+        perm: 0644
+        user: root
+        group: root
+  - ssh:
+      address: <master 3 ip>
+      user: <user>
+      port: 22
+      keyPath: ~/.ssh/id_rsa
+    role: controller
+    installFlags:
+    - --disable-components=coredns
+    - --disable-components=autopilot
+    - --disable-components=windows-node
+    uploadBinary: true
+    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: enp0s3
+    files:
+      - name: bundle-file
+        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755
+      - name: coredns-manifest
+        src: ./coredns.yaml
+        dstDir: /var/lib/k0s/manifests/coredns/
+        perm: 0644
+        user: root
+        group: root
+  - ssh:
+      address: <worker 1 ip>
+      user: <user>
+      port: 22
+      keyPath: ~/.ssh/id_rsa
+    role: worker
+    uploadBinary: true
+    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: enp0s3
+    files:
+      - name: bundle-file
+        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755
+  - ssh:
+      address: <worker 2 ip>
+      user: <user>
+      port: 22
+      keyPath: ~/.ssh/id_rsa
+    role: worker
+    uploadBinary: true
+    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: enp0s3
+    files:
+      - name: bundle-file
+        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755
+  - ssh:
+      address: <worker 3 ip>
+      user: <user>
+      port: 22
+      keyPath: ~/.ssh/id_rsa
+    role: worker
+    uploadBinary: true
+    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: enp0s3
+    files:
+      - name: bundle-file
+        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755
+  k0s:
+    version: v1.32.3+k0s.0
+    config:
+      spec:
+        api:
+          sans:
+          - <keepalive vip>
+        network:
+          provider: calico
+          calico:
+            wireguard: true
+          nodeLocalLoadBalancing:
+            enabled: true
+            type: EnvoyProxy
+          controlPlaneLoadBalancing:
+            enabled: true
+            type: Keepalived
+            keepalived:
+              vrrpInstances:
+              - virtualIPs: ["<keepalive vip>/32"]
+                authPass: "ieLoo0id"
+              virtualServers:
+              - ipAddress: "<keepalive vip>"
+        images:
+          default_pull_policy: Never
+        telemetry:
+          enabled: false
+        extensions:
+          helm:
+            concurrencyLevel: 1
+            repositories:
+            - name: ceph-csi
+              url: https://ceph.github.io/csi-charts
+            charts:
+            - name: ceph-csi-rbd
+              chartname: ceph-csi/ceph-csi-rbd
+              version: "3.14.0"
+              timeout: 5m
+              order: 1
+              values: |
+                rbac:
+                  create: true
+                serviceAccounts:
+                  nodeplugin:
+                    create: true
+                  provisioner:
+                    create: true
+                csiConfig:
+                  - clusterID: "<cluster ID>"
+                    monitors:
+                      - "<mon 1 ip>:<mon 1 port>"
+                      - "<mon 2 ip>:<mon 2 port>"
+                      - "<mon 3 ip>:<mon 3 port>"
+                nodeplugin:
+                  name: nodeplugin
+                  registrar:
+                    image:
+                      repository: <local repo>/sig-storage/csi-node-driver-registrar
+                  plugin:
+                    image:
+                      repository: <local repo>/cephcsi/cephcsi
+                provisioner:
+                  name: provisioner
+                  replicaCount: 3
+                  strategy:
+                    type: RollingUpdate
+                    rollingUpdate:
+                      maxUnavailable: 50%
+                  provisioner:
+                    image:
+                      repository: <local repo>/sig-storage/csi-provisioner
+                    resources: {}
+                  attacher:
+                    name: attacher
+                    enabled: true
+                    image:
+                      repository: <local repo>/sig-storage/csi-attacher
+                  resizer:
+                    name: resizer
+                    enabled: true
+                    image:
+                      repository: <local repo>/sig-storage/csi-resizer
+                  snapshotter:
+                    image:
+                      repository: <local repo>/sig-storage/csi-snapshotter
+
+                storageClass:
+                  create: true
+                  name: csi-rbd-sc
+                  clusterID: <cluster ID>
+                  pool: kubernetes
+                  provisionerSecret: csi-rbd-secret
+                  provisionerSecretNamespace: ""
+                  controllerExpandSecret: csi-rbd-secret
+                  controllerExpandSecretNamespace: ""
+                  nodeStageSecret: csi-rbd-secret
+                  nodeStageSecretNamespace: ""
+                  fstype: ext4
+                  reclaimPolicy: Delete
+                  allowVolumeExpansion: true
+                secret:
+                  create: true
+                  name: csi-rbd-secret
+                  userID: kubernetes
+                  userKey: <token>
+                kubeletDir: /var/lib/k0s/kubelet
+              namespace: ceph-csi-rbd

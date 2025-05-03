@@ -2,11 +2,11 @@
 
 This document explains how to configure a Docker‑based Nexus 3 instance with group+mirror repos, retrieve the initial admin password, and deploy the Nexus configuration via Terraform.
 
-## 0. Copy docker folder to the desired destination
+## 0. Copy Docker folder to the desired destination
 
-This config assumes you have a TLS cert and key that you want to configure for the nexus usage in the docker/cert folder
+This configuration assumes you have a TLS certificate and key named nexus.crt & nexus.key that you want to use for Nexus. Place them in the `docker/cert` folder.
 
-* nginx is configured such that if any docker request hit it the request would be redirected to docker-group repository
+* Nginx is configured so that if any Docker request hits it, the request will be redirected to the docker‑group repository.
 
 In order to bring up the whole stack:
 

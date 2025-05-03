@@ -62,15 +62,15 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 
 # TLDR
 
-*  Fill in the placeholders in your cluster-definition, .gitlab-ci and you’re ready to deploy:
+*  Fill in the placeholders in your cluster‑definition and .gitlab‑ci, and you’re ready to deploy:
 
 | Placeholder               | Description                                                 |
 | ------------------------- | ----------------------------------------------------------- |
 | `<master-ip>…<worker-ip>` | IP addresses of all control‑plane and worker nodes          |
 | `<ssh-user>`              | Linux user for k0sctl SSH connections                       |
-| `<local-repo>`            | Base URL or path for miror of GitHub artifacts & OCI images |
+| `<local-repo>`            | Base URL or path for mirror of GitHub artifacts & OCI images|
 | `<keepalive-vip>`         | Virtual IP for external kubectl/API‑server access           |
-| Optionals                 |                                                             |
+| Optional parameters       |                                                             |
 | `<mon-ip>…<mon-ip>`       | IPs of Ceph monitor nodes                                   |
 | `<mon-port>…<mon-port>`   | Corresponding ports for each Ceph monitor (default: `6789`) |
 | `<cluster-id>`            | Ceph cluster identifier                                     |
@@ -209,7 +209,7 @@ $ ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd p
     key = AQDIhxRoox5uNBAAUljjJ3S9LVN27i63Paa0Iw==
 ```
 
-* Retrive Ceph monitor addresses & cluster id
+* Retrieve Ceph monitor addresses & cluster id
 ```bash
 $ ceph mon dump
 <...>
@@ -305,6 +305,6 @@ Once k0s applies this extension, you’ll have a new namespace `ceph-csi-rbd` an
 
 You can of course adapt these values to enable CephFS CSI (`ceph-csi/ceph-csi-cephfs` chart), or tweak pools, secrets, and scaling parameters as needed.
 
-## Optional repo manger: sonatype nexus
+## Optional repository manager: Sonatype Nexus Repository
 
 - [Nexus Setup & Terraform](nexus/README.md)

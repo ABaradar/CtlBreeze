@@ -23,12 +23,6 @@ spec:
         src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
-      - name: coredns-manifest
-        src: ./coredns.yaml
-        dstDir: /var/lib/k0s/manifests/coredns/
-        perm: 0644
-        user: root
-        group: root
   - ssh:
       address: <master 2 ip>
       user: <user>
@@ -47,12 +41,6 @@ spec:
         src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
-      - name: coredns-manifest
-        src: ./coredns.yaml
-        dstDir: /var/lib/k0s/manifests/coredns/
-        perm: 0644
-        user: root
-        group: root
   - ssh:
       address: <master 3 ip>
       user: <user>
@@ -71,12 +59,6 @@ spec:
         src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
-      - name: coredns-manifest
-        src: ./coredns.yaml
-        dstDir: /var/lib/k0s/manifests/coredns/
-        perm: 0644
-        user: root
-        group: root
   - ssh:
       address: <worker 1 ip>
       user: <user>
@@ -152,12 +134,80 @@ spec:
             repositories:
             - name: ceph-csi
               url: https://ceph.github.io/csi-charts
+            - name: coredns
+              url: https://coredns.github.io/helm
             charts:
+            - name: coredns
+              chartname: coredns/coredns
+              version: "1.42.0"
+              timeout: 5m
+              order: 1
+              values: |
+                image:
+                  repository: <local repo>/coredns/coredns
+                replicaCount: 2
+                servers:
+                - zones:
+                  - zone: .
+                  port: 53
+                  # -- expose the service on a different port
+                  # servicePort: 5353
+                  # If serviceType is nodePort you can specify nodePort here
+                  # nodePort: 30053
+                  # hostPort: 53
+                  plugins:
+                  - name: errors
+                  # Serves a /health endpoint on :8080, required for livenessProbe
+                  - name: health
+                    configBlock: |-
+                      lameduck 10s
+                  # Serves a /ready endpoint on :8181, required for readinessProbe
+                  - name: ready
+                  # Required to query kubernetes API for data
+                  - name: kubernetes
+                    parameters: cluster.local in-addr.arpa
+                    configBlock: |-
+                      pods insecure
+                      fallthrough in-addr.arpa
+                      ttl 5
+                  # Serves a /metrics endpoint on :9153, required for serviceMonitor
+                  - name: prometheus
+                    parameters: 0.0.0.0:9153
+                  - name: forward
+                    parameters: . /etc/resolv.conf
+                  - name: cache
+                    parameters: 5
+                  - name: loop
+                  - name: reload
+                  - name: loadbalance
+                livenessProbe:
+                  enabled: true
+                  initialDelaySeconds: 60
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 5
+                  successThreshold: 1
+                readinessProbe:
+                  enabled: true
+                  initialDelaySeconds: 30
+                  periodSeconds: 2
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+                  successThreshold: 1
+                podDisruptionBudget:
+                  minAvailable: "50%"
+                autoscaler:
+                  # Enabled the cluster-proportional-autoscaler
+                  enabled: true
+                  min: 2
+                  image:
+                    repository: <local repo>/cpa/cluster-proportional-autoscaler
+              namespace: kube-system
             - name: ceph-csi-rbd
               chartname: ceph-csi/ceph-csi-rbd
               version: "3.14.0"
               timeout: 5m
-              order: 1
+              order: 2
               values: |
                 rbac:
                   create: true
@@ -172,6 +222,7 @@ spec:
                       - "<mon 1 ip>:<mon 1 port>"
                       - "<mon 2 ip>:<mon 2 port>"
                       - "<mon 3 ip>:<mon 3 port>"
+
                 nodeplugin:
                   name: nodeplugin
                   registrar:
@@ -219,6 +270,7 @@ spec:
                   fstype: ext4
                   reclaimPolicy: Delete
                   allowVolumeExpansion: true
+
                 secret:
                   create: true
                   name: csi-rbd-secret

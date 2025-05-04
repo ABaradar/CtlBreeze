@@ -104,7 +104,7 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 ## CoreDNS Configuration Note
 
 - Changing the CoreDNS config map using k0s is not supported yet, as discussed in [Issue 4459](https://github.com/k0sproject/k0s/issues/4459) and [Issue 4021](https://github.com/k0sproject/k0s/issues/4021).
-- Consequently, CoreDNS is disabled by default and its configuration is managed using a manifest deployer (for example, to spoof domains (included in sample) or disable IPv6 loops) hence the flag `--disable-components=coredns`.
+- Consequently, CoreDNS is disabled by default and its configuration is managed using a hel chart(for example, disable IPv6 resolution) hence the flag `--disable-components=coredns`.
 
 ## Telemetry
 

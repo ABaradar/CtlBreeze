@@ -72,9 +72,11 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 | `<keepalive-vip>`         | Virtual IP for external kubectl/API‑server access           |
 | Optional parameters       |                                                             |
 | `<mon-ip>…<mon-ip>`       | IPs of Ceph monitor nodes                                   |
-| `<mon-port>…<mon-port>`   | Corresponding ports for each Ceph monitor (default: `6789`) |
+| `<mon-port>…<mon-port>`   | Corresponding ports for each Ceph monitor *                 |
 | `<cluster-id>`            | Ceph cluster identifier                                     |
 | `<auth-token>`            | Ceph user’s authentication key                              |
+
+\* Ceph monitors support two “messenger” protocols – the original legacy v1 and the newer v2 (also called msgr2). The v1 protocol (default port 6789) is the long‑standing on‑wire format, while v2 (default port 3300) introduces a revised wire protocol with encryption, better authentication payload encapsulation, and more
 
 # Deployment Considerations
 

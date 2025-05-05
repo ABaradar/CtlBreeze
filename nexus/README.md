@@ -19,7 +19,7 @@ sudo docker compose up -d
 - **Group repository**
   Aggregates multiple hosted or proxy repositories into a single URL endpoint, so clients need only one repository address to access all member repos.
 - **Proxy (mirror) repository**
-  Caches artifacts on‑demand from a remote registry; you can then add one or more mirror URLs under the “Mirrors” tab to distribute load or provide fail‑over.
+  Caches artifacts on‑demand from a remote registry; you can then add one or more mirror URLs under the “Mirrors” tab to distribute load or provide fail‑over in case of remote repository down time.
 
 ## 2. Retrieving the Admin Password
 

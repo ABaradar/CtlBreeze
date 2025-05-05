@@ -73,6 +73,10 @@ spec:
         src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
+    hooks:
+      apply:
+        after:
+          - sudo k0s ctr images prune --all
   - ssh:
       address: <worker 2 ip>
       user: <user>
@@ -87,6 +91,10 @@ spec:
         src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
+    hooks:
+      apply:
+        after:
+          - sudo k0s ctr images prune --all
   - ssh:
       address: <worker 3 ip>
       user: <user>
@@ -101,8 +109,12 @@ spec:
         src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
+    hooks:
+      apply:
+        after:
+          - sudo k0s ctr images prune --all
   k0s:
-    version: v1.32.3+k0s.0
+    version: v1.32.4+k0s.0
     config:
       spec:
         api:

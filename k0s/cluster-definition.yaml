@@ -280,6 +280,8 @@ spec:
                 storageClass:
                   create: true
                   name: csi-rbd-sc
+                  annotations:
+                    storageclass.kubernetes.io/is-default-class: "true"
                   clusterID: <cluster ID>
                   pool: kubernetes
                   provisionerSecret: csi-rbd-secret

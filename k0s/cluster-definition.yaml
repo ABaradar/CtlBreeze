@@ -65,6 +65,8 @@ spec:
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: worker
+    installFlags:
+      - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
     uploadBinary: true
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
@@ -83,6 +85,8 @@ spec:
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: worker
+    installFlags:
+      - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
     uploadBinary: true
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
@@ -101,6 +105,8 @@ spec:
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: worker
+    installFlags:
+      - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
     uploadBinary: true
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
@@ -214,6 +220,9 @@ spec:
                   min: 2
                   image:
                     repository: <local repo>/cpa/cluster-proportional-autoscaler
+                serviceType: "ClusterIP"
+                service:
+                  clusterIP: "<10th IP in the Service CIDR>"
               namespace: kube-system
             - name: ceph-csi-rbd
               chartname: ceph-csi/ceph-csi-rbd

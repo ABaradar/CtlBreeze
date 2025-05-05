@@ -70,6 +70,7 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 | `<ssh-user>`              | Linux user for k0sctl SSH connections                       |
 | `<local-repo>`            | Base URL or path for mirror of GitHub artifacts & OCI images|
 | `<keepalive-vip>`         | Virtual IP for external kubectl/API‑server access           |
+| `<10th IP ..Service CIDR>`| 10th IP in the Service CIDR for DNS                         |
 | Optional parameters       |                                                             |
 | `<mon-ip>…<mon-ip>`       | IPs of Ceph monitor nodes                                   |
 | `<mon-port>…<mon-port>`   | Corresponding ports for each Ceph monitor *                 |
@@ -105,8 +106,11 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 
 ## CoreDNS Configuration Note
 
-- Changing the CoreDNS config map using k0s is not supported yet, as discussed in [Issue 4459](https://github.com/k0sproject/k0s/issues/4459) and [Issue 4021](https://github.com/k0sproject/k0s/issues/4021).
-- Consequently, CoreDNS is disabled by default and its configuration is managed using a hel chart(for example, disable IPv6 resolution) hence the flag `--disable-components=coredns`.
+- Changing the CoreDNS ConfigMap using k0s is not supported yet, as discussed in [Issue 4459](https://github.com/k0sproject/k0s/issues/4459) and [Issue 4021](https://github.com/k0sproject/k0s/issues/4021).
+- Consequently, CoreDNS is disabled by default and its configuration relies on a Helm chart instead. Controllers are started with `--disable-components=coredns`, and workers with `--kubelet-extra-args="--cluster-dns=<coredns service IP>"`, to be filled in later**.
+
+** The kubelet’s ClusterDNS setting is a list of IPs that all pods on that node will use for DNS resolution instead of the host’s `/etc/resolv.conf` nameservers. When you set `--cluster-dns`, the kubelet writes those IPs into each Pod’s `/etc/resolv.conf` as nameserver entries. In k0sctl, you supply this via `--kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"`. By convention, Kubernetes reserves the 10th IP in the Service CIDR for DNS (e.g. `10.96.0.10`). This static allocation avoids collisions with dynamically assigned Service IPs. See the [Kubernetes docs](https://kubernetes.io/docs/concepts/services-networking/cluster-ip-allocation/#why-do-you-need-to-reserve-service-cluster-ips). The Service CIDR defaults to `10.96.0.0/12`, which results in `10.96.0.10` for the DNS IP.
+
 
 ## Telemetry
 

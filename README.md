@@ -311,6 +311,119 @@ Once k0s applies this extension, you’ll have a new namespace `ceph-csi-rbd` an
 
 You can of course adapt these values to enable CephFS CSI (`ceph-csi/ceph-csi-cephfs` chart), or tweak pools, secrets, and scaling parameters as needed.
 
+## 5.  Ceph operations
+
+### 5.1 Enabling the Dashboard
+The Ceph Dashboard is provided by the mgr (Manager) daemon. To enable it and expose it on a custom port without SSL:
+```bash
+# Disable SSL for the dashboard
+sudo microceph.ceph config set mgr mgr/dashboard/ssl false
+
+# Change the dashboard port (default is 8080)
+sudo microceph.ceph config set mgr mgr/dashboard/server_port 9090
+
+# Enable the dashboard module
+sudo microceph.ceph mgr module enable dashboard
+
+# Set the administrator password
+echo -n "password" | sudo tee /var/snap/microceph/current/conf/password.txt
+
+# Create the admin user (reads password from file)
+sudo microceph.ceph dashboard ac-user-create \
+  -i /var/snap/microceph/current/conf/password.txt \
+  admin administrator
+```
+
+You can now access the dashboard at
+
+```html
+http://<any-mgr-ip>:9090
+```
+and log in with user admin and the password you specified. 
+
+### 5.2 Deleting a Pool
+By default, Ceph prevents accidental pool deletion. To remove a pool:
+
+```bash
+# Temporarily allow pool deletion on all monitors
+sudo microceph.ceph tell mon.* injectargs --mon_allow_pool_delete true
+
+# Delete the pool named “test_pool”
+sudo microceph.ceph osd pool delete test_pool test_pool --yes-i-really-really-mean-it
+
+# Revoke the pool‑deletion permission
+sudo microceph.ceph tell mon.* injectargs --mon_allow_pool_delete false
+```
+This avoids needing to restart any monitors. 
+
+### 5.3 Enabling RGW (S3)
+The RADOS Gateway (RGW) provides S3‑compatible object storage. It is stateless, so you can run it on multiple nodes behind a load balancer:
+
+```bash
+sudo microceph enable rgw
+# or to target a specific node:
+sudo microceph enable rgw --target <node-name>
+```
+Once enabled, RGW daemons will appear under SERVICES in ceph status. 
+
+### 5.4 Creating an S3‑CLI User
+To interact with RGW via AWS‑CLI or other S3 tools, create a user with appropriate capabilities:
+
+```bash
+sudo microceph.radosgw-admin user create \
+  --uid=rgw-admin \
+  --display-name="RGW-Admin" \
+  --caps="buckets=*;users=*;usage=read;metadata=read;zone=read" \
+  --rgw-zonegroup=default \
+  --rgw-zone=default
+```
+Example output (showing access and secret keys):
+
+```bash
+{
+  "user_id": "rgw-admin",
+  "display_name": "RGW-Admin",
+  …
+  "keys": [
+    {
+      "access_key": "GYLAGG3AIK2A6O2YPNHV",
+      "secret_key": "xY5FouJqpVPvFmcgjQBxFyBDH117iyLSvYAfDdal"
+    }
+  ]
+}
+```
+
+### 5.5 Configuring AWS‑CLI for Ceph RGW
+Use the keys from above to configure an AWS‑CLI profile:
+
+```bash
+aws configure --profile rgw-admin
+```
+When prompted, enter:
+* AWS Access Key ID: your access key
+* AWS Secret Access Key: your secret key
+* Default region name: (press Enter)
+* Default output format: json
+
+Then you can list buckets and upload objects:
+
+```bash
+# List buckets
+aws --profile=rgw-admin \
+    --endpoint-url http://<rgw-addr> \
+  s3 ls
+
+# Create a bucket
+aws --profile=rgw-admin \
+    --endpoint-url http://<rgw-addr> \
+  s3api create-bucket --bucket bucket-test
+
+# Upload a file
+aws --profile=rgw-admin \
+    --endpoint-url http://<rgw-addr> \
+  s3 cp ./test.file s3://bucket-test/
+```
+
 ## Optional repository manager: Sonatype Nexus Repository
 
 - [Nexus Setup & Terraform](nexus/README.md)

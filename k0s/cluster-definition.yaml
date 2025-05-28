@@ -137,7 +137,7 @@ spec:
       limit: 30
       uploads: 6
   k0s:
-    version: v1.32.4+k0s.0
+    version: v1.33.1+k0s.0
     config:
       spec:
         api:
@@ -174,7 +174,7 @@ spec:
             charts:
             - name: coredns
               chartname: coredns/coredns
-              version: "1.42.0"
+              version: "1.42.2"
               timeout: 5m
               order: 1
               values: |

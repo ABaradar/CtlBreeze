@@ -119,6 +119,23 @@ spec:
       apply:
         after:
           - sudo k0s ctr images prune --all
+  options:
+    wait:
+      enabled: true
+    drain:
+      enabled: true
+      gracePeriod: 2m
+      timeout: 5m
+      force: true
+      ignoreDaemonSets: true
+      deleteEmptyDirData: true
+    evictTaint:
+      enabled: true
+      taint: k0sctl.k0sproject.io/evict=true
+      effect: NoSchedule
+    concurrency:
+      limit: 30
+      uploads: 6
   k0s:
     version: v1.32.4+k0s.0
     config:

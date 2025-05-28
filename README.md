@@ -116,6 +116,21 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 
 - **Telemetry and anonymous usage data reporting** are disabled for privacy reasons.
 
+## Drain & evict Configuration
+
+- **Wait**: K0sctl waits for nodes to become ready before continuing to the next operation.
+- **Graceful termination period**: Pods are given a **2-minute grace period** to shut down cleanly before being forcibly terminated.
+- **Operation timeout**: The entire drain operation will timeout after **5 minutes** to prevent indefinite hanging during maintenance.
+- **Force eviction**: Enabled to handle pods that are not managed by standard controllers (ReplicaSets, DaemonSets, etc.).
+- **DaemonSet handling**: DaemonSet pods are **ignored during drain operations** since they are typically required for node functionality.
+- **EmptyDir data handling**: **Deletion of EmptyDir data is allowed** to ensure complete pod removal from nodes being drained.
+
+### Evict Taint Mechanism
+
+- **Automatic tainting**: Nodes are automatically tainted during maintenance operations to prevent new pod scheduling.
+- **Custom taint**: Uses the taint `k0sctl.k0sproject.io/evict=true` with `NoSchedule` effect.
+- **Proactive eviction**: Ensures workloads are moved to healthy nodes before the node becomes unavailable.
+
 ---
 
 # CI/CD Pipeline & Artifacts

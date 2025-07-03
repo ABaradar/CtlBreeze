@@ -15,7 +15,8 @@ spec:
     - --disable-components=coredns
     - --disable-components=autopilot
     - --disable-components=windows-node
-    uploadBinary: true
+    - --debug
+    uploadBinary: false
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
@@ -33,7 +34,8 @@ spec:
     - --disable-components=coredns
     - --disable-components=autopilot
     - --disable-components=windows-node
-    uploadBinary: true
+    - --debug
+    uploadBinary: false
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
@@ -51,7 +53,8 @@ spec:
     - --disable-components=coredns
     - --disable-components=autopilot
     - --disable-components=windows-node
-    uploadBinary: true
+    - --debug
+    uploadBinary: false
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
@@ -66,8 +69,9 @@ spec:
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
-      - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
-    uploadBinary: true
+    - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
+    - --debug
+    uploadBinary: false
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
@@ -86,8 +90,9 @@ spec:
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
-      - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
-    uploadBinary: true
+    - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
+    - --debug
+    uploadBinary: false
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
@@ -106,8 +111,9 @@ spec:
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
-      - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
-    uploadBinary: true
+    - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
+    - --debug
+    uploadBinary: false
     k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:

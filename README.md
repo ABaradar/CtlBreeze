@@ -215,24 +215,24 @@ MicroCeph is a snap‑packaged, minimal‑ops distribution of Ceph that makes it
 
 * Create a Pool
 ```bash
-ceph osd pool create kubernetes
+sudo ceph osd pool create kubernetes
 ```
 
 * A newly created pool must be initialized prior to use. Use the rbd tool to initialize the pool:
 ```bash
-rbd pool init kubernetes
+sudo rbd pool init kubernetes
 ```
 
 * Setup Ceph Client Authentication
 ```bash
-$ ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes' mgr 'profile rbd pool=kubernetes'
+$ sudo ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes' mgr 'profile rbd pool=kubernetes'
 [client.kubernetes]
     key = AQDIhxRoox5uNBAAUljjJ3S9LVN27i63Paa0Iw==
 ```
 
 * Retrieve Ceph monitor addresses & cluster id
 ```bash
-$ ceph mon dump
+$ sudo ceph mon dump
 <...>
 fsid 9d8b0c3b-00c6-4fdb-8ac7-d7ae0dfda41c
 <...>

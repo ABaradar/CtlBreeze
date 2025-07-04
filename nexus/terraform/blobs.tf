@@ -15,3 +15,12 @@ resource "nexus_blobstore_file" "github" {
     type  = "spaceUsedQuota"
   }
 }
+
+resource "nexus_blobstore_file" "helm" {
+  name = "github"
+  path = "github"
+  soft_quota {
+    limit = 2147483648
+    type  = "spaceUsedQuota"
+  }
+}

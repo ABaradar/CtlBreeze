@@ -174,9 +174,9 @@ spec:
             concurrencyLevel: 1
             repositories:
             - name: ceph-csi
-              url: https://ceph.github.io/csi-charts
+              url: https://<local repo>/ceph
             - name: coredns
-              url: https://coredns.github.io/helm
+              url: https://<local repo>/coredns
             charts:
             - name: coredns
               chartname: coredns/coredns

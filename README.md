@@ -252,6 +252,12 @@ extensions:
     repositories:
       - name: ceph-csi
         url: https://ceph.github.io/csi-charts
+########################################################################
+######## you could also use helm chart proxy instead ###################
+########################################################################
+#     - name: ceph-csi                               ###################
+#       url: https://nexus.local/ceph                ###################
+########################################################################
     charts:
       - name: ceph-csi-rbd
         chartname: ceph-csi/ceph-csi-rbd
@@ -318,6 +324,7 @@ extensions:
           kubeletDir: /var/lib/k0s/kubelet
         namespace: ceph-csi-rbd
 ```
+
 This uses the `ceph-csi‑rbd` chart from the official [Ceph CSI Charts repo](https://github.com/ceph/ceph-csi/tree/devel/charts/ceph-csi-rbd).
 
 All RBAC, service accounts, sidecars, and StorageClass definitions are handled via the `values` block .
@@ -325,6 +332,31 @@ All RBAC, service accounts, sidecars, and StorageClass definitions are handled v
 Once k0s applies this extension, you’ll have a new namespace `ceph-csi-rbd` and `csi-rbd-sc` StorageClass. PVCs referencing it will dynamically provision RBD volumes on your MicroCeph cluster.
 
 You can of course adapt these values to enable CephFS CSI (`ceph-csi/ceph-csi-cephfs` chart), or tweak pools, secrets, and scaling parameters as needed.
+
+### Tip: For air‑gapped environments, use a chart proxy (e.g., [sonatype nexus](nexus/README.md)) to cache Helm charts. See the nexus folder in this repo for an example.
+
+Alternatively, you can proxy OCI‑compatible registries via Nexus without specifying the repository prefix. Example for deploying Contour:
+
+```yaml
+            - name: contour
+              chartname: oci://nexus.local/bitnamicharts/contour
+              version: "21.0.7"
+              timeout: 5m
+              order: 3
+              values: |
+                global:
+                  imageRegistry: "nexus.local"
+                  security:
+                    allowInsecureImages: true
+                envoy:
+                  service:
+                    type: NodePort
+                    nodePorts:
+                      http: "30000"
+                      https: "30443"
+                      metrics: ""
+              namespace: projectcontour
+```
 
 ## 5.  Ceph operations
 

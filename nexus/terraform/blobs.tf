@@ -17,8 +17,8 @@ resource "nexus_blobstore_file" "github" {
 }
 
 resource "nexus_blobstore_file" "helm" {
-  name = "github"
-  path = "github"
+  name = "helm"
+  path = "helm"
   soft_quota {
     limit = 2147483648
     type  = "spaceUsedQuota"

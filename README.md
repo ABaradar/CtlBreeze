@@ -59,7 +59,11 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 ```
 
 ### (Recommended worker node performance)
+<<<<<<< HEAD
 To mitigate "too many open files" error your k0s cluster worker nodes, ensure the following:
+=======
+To ([mitigate](https://github.com/kubeflow/manifests/issues/2087#issuecomment-1101482095)) "too many open files" error your k0s cluster worker nodes, ensure the following:
+>>>>>>> 62bd661 (docs: added too many open files solution)
 
 * increase max open files on each k0s worker node:
 ```bash

@@ -58,6 +58,14 @@ sudo modprobe nbd
 echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reboots
 ```
 
+### (Recommended worker node performance)
+To mitigate "too many open files" error your k0s cluster worker nodes, ensure the following:
+
+* increase max open files on each k0s worker node:
+```bash
+sudo bash -c "printf '%s\n' 'fs.inotify.max_user_instances = 1280' 'fs.inotify.max_user_watches = 655360' > /etc/sysctl.d/99-inotify.conf && sysctl --system"
+```
+
 * If MicroCeph is installed on the same worker nodes via Snap, it typically manages the necessary kernel modules automatically through the kernel-module-load interface.
 
 ---

@@ -38,6 +38,8 @@ cat id_rsa | base64 -w0
 
 In order to enhance security, the generated `kubeconfig` file is encrypted before being stored as an artifact. The encryption uses OpenSSL with AES-256-CBC. For this to work, you need to set a new CI/CD variable called `KUBECONFIG_PASSWORD`. This variable holds the password used to encrypt the `kubeconfig` file. Ensure that the variable is kept secret and only available in your CI/CD environment.
 
+> :warning: **you should never use install for upgrading the cluster because it's unsafe**: always use the upgrade job so you can use the restore afterwards if needed!
+
 ### Decrypting the Encrypted kubeconfig
 
 To decrypt the `kubeconfig.yaml.enc` file and retrieve the original `kubeconfig.yaml`, run the following command: (replace \<PASSWORD\> accordingly)
@@ -138,17 +140,34 @@ echo -e "rbd\nnbd" | sudo tee /etc/modules-load.d/ceph.conf # Persist Across Reb
 ## k0sctl Execution
 
 - The `k0sctl apply` command is used to deploy or update the cluster.
-- The command output is stored for debugging and auditing.
+- The `k0sctl backup` command is used to take a backup of the cluster control plane state into the current working directory.
+- The `k0sctl apply --restore-from` command is used for full restoration of the cluster control plane state, including (Etcd datastore content,Certificates,Keys)
+- The `k0sctl kubeconfig` command connects to the cluster and outputs a kubeconfig file that can be used with `kubectl` or `kubeadm` to manage the kubernetes cluster.
+- The commands output is stored for debugging and auditing.
 
 ## Artifacts Storage
 
 - The `kubeconfig` file and `k0sctl` execution logs are stored as GitLab artifacts.
 - These artifacts remain available for **3 days** to facilitate debugging and accessing the cluster.
+- The backups for cluster upgrade also use these artifact store, in order for large backup file to not fail with error `ERROR: Uploading artifacts as "archive" to coordinator... 413 Request Entity Too Large  id=21604 responseStatus=413 Request Entity Too Large status=413` you should configure your gitlab instance like ([this](https://forum.gitlab.com/t/uploading-artifacts-to-coordinator-too-large-archive/41441/5)) to enable large artifacts via setting and configure gitlab nginx with unlimited client_max_body_size.
 
-## Upgrading Kubernetes
+
+## Upgrading & Restore Kubernetes
 
 - Kubernetes can be upgraded by changing the version in the cluster configuration YAML file.
-- Running `k0sctl apply` with the updated configuration will automatically upgrade the cluster.
+- Running the upgrade job in CI pipeline will result in a backup creation and upgrade which you can use to revert if anything goes wrong after upgrade.
+
+## Retrive kubeconfig
+
+- The kubeconfig CI job will retrive kubeconfig for you and stores it as an artifact so you can download and use it later.
+
+## Install & Remove cluster
+
+These job are meant for edge use cases like:
+- initializing cluster for the first time (Install)
+- using ephemeral test clusters (Remove)
+and etc. because these jobs are not safe and if used out of place will result in disaster there is a fail safe that confirms these jobs before running them so have to run them manually then another confirm to use them.
+
 
 ## Optional Storage: MicroCeph & Ceph CSI
 

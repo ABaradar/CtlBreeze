@@ -1,5 +1,6 @@
 stages:
-  - init_cluster
+  - Cluster_ops
+  - DR
 
 before_script:
   - apk add --update openssh-client bash openssl wget
@@ -9,13 +10,88 @@ before_script:
   - chmod 600 ~/.ssh/id_rsa
   - bash -c 'ssh-add ~/.ssh/id_rsa'
 
-install_or_upgrade_k0s:
-  stage: init_cluster
-  image: alpine:latest
+Install:
+  stage: Cluster_ops
+  image: <local-repo>/alpine:latest
+  manual_confirmation: "Confirm cluster installation wihtout backup"
   script:
     - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
     - chmod +x k0sctl-linux-amd64
     - ./k0sctl-linux-amd64 apply -c cluster-definition.yaml -d --trace | tee k0sctl_output.log
+    - ./k0sctl-linux-amd64 kubeconfig -c cluster-definition.yaml > kubeconfig.yaml
+  after_script:
+    - openssl enc -aes-256-cbc -salt -in k0s/kubeconfig.yaml -out k0s/kubeconfig.yaml.enc -k "$KUBECONFIG_PASSWORD"
+  artifacts:
+    paths:
+      - k0s/k0sctl_output.log
+      - k0s/kubeconfig.yaml.enc
+    expire_in: 3 days
+  rules:
+    - changes:
+        - k0s/*
+      when: manual
+    - when: never
+
+Remove:
+  stage: Cluster_ops
+  image: <local-repo>/alpine:latest
+  manual_confirmation: "Confirm cluster deletion"
+  script:
+    - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
+    - chmod +x k0sctl-linux-amd64
+    - printf 'y\n' | ./k0sctl-linux-amd64 reset -c cluster-definition.yaml -d --trace --force
+  rules:
+    - changes:
+        - k0s/*
+      when: manual
+    - when: never
+
+Upgrade:
+  stage: Cluster_ops
+  image: <local-repo>/alpine:latest
+  script:
+    - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
+    - chmod +x k0sctl-linux-amd64
+    - ./k0sctl-linux-amd64 backup -c cluster-definition.yaml -d --trace -o ./k0s_backup.tar.gz 2>&1 | tee backup.log
+    - ./k0sctl-linux-amd64 apply -c cluster-definition.yaml -d --trace | tee k0sctl_output.log
+  artifacts:
+    when: always
+    paths:
+      - k0s/k0sctl_output.log
+      - k0s/k0s_backup.tar.gz
+      - k0s/backup.log
+    expire_in: 3 days
+  rules:
+    - changes:
+        - k0s/*
+      when: manual
+    - when: never
+
+kubeconfig:
+  stage: Cluster_ops
+  script:
+    - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
+    - chmod +x k0sctl-linux-amd64
+    - ./k0sctl-linux-amd64 kubeconfig -c cluster-definition.yaml > kubeconfig.yaml
+  after_script:
+    - openssl enc -aes-256-cbc -salt -in k0s/kubeconfig.yaml -out k0s/kubeconfig.yaml.enc -k "$KUBECONFIG_PASSWORD"
+  artifacts:
+    paths:
+      - k0s/kubeconfig.yaml.enc
+    expire_in: 3 days
+  rules:
+    - when: manual
+    
+Restore:
+  stage: DR
+  needs:
+    - job: Upgrade
+      artifacts: true
+  script:
+    - rm -rf k0s/k0sctl_output.log k0s/kubeconfig.yaml.enc
+    - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
+    - chmod +x k0sctl-linux-amd64
+    - ./k0sctl-linux-amd64 apply --restore-from k0s_backup.tar.gz -c cluster-definition.yaml -d --trace | tee k0sctl_output.log
     - ./k0sctl-linux-amd64 kubeconfig -c cluster-definition.yaml > kubeconfig.yaml
   after_script:
     - openssl enc -aes-256-cbc -salt -in k0s/kubeconfig.yaml -out k0s/kubeconfig.yaml.enc -k "$KUBECONFIG_PASSWORD"

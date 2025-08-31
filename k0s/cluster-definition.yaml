@@ -238,11 +238,7 @@ spec:
                 podDisruptionBudget:
                   minAvailable: "50%"
                 autoscaler:
-                  # Enabled the cluster-proportional-autoscaler
-                  enabled: true
-                  min: 2
-                  image:
-                    repository: <local repo>/cpa/cluster-proportional-autoscaler
+                  enabled: false
                 serviceType: "ClusterIP"
                 service:
                   clusterIP: "<10th IP in the Service CIDR>"

@@ -180,7 +180,7 @@ spec:
             charts:
             - name: coredns
               chartname: coredns/coredns
-              version: "1.43.0"
+              version: "1.45.0"
               timeout: 5m
               order: 1
               values: |
@@ -245,7 +245,7 @@ spec:
               namespace: kube-system
             - name: ceph-csi-rbd
               chartname: ceph-csi/ceph-csi-rbd
-              version: "3.14.1"
+              version: "3.15.1"
               timeout: 5m
               order: 2
               values: |

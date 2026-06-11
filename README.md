@@ -75,18 +75,20 @@ sudo bash -c "printf '%s\n' 'fs.inotify.max_user_instances = 1280' 'fs.inotify.m
 
 *  Fill in the placeholders in your cluster‑definition and .gitlab‑ci, and you’re ready to deploy:
 
-| Placeholder               | Description                                                 |
-| ------------------------- | ----------------------------------------------------------- |
-| `<master-ip>…<worker-ip>` | IP addresses of all control‑plane and worker nodes          |
-| `<ssh-user>`              | Linux user for k0sctl SSH connections                       |
-| `<local-repo>`            | Base URL or path for mirror of GitHub artifacts & OCI images|
-| `<keepalive-vip>`         | Virtual IP for external kubectl/API‑server access           |
-| `<10th IP ..Service CIDR>`| 10th IP in the Service CIDR for DNS **                      |
-| Optional parameters       |                                                             |
-| `<mon-ip>…<mon-ip>`       | IPs of Ceph monitor nodes                                   |
-| `<mon-port>…<mon-port>`   | Corresponding ports for each Ceph monitor *                 |
-| `<cluster-id>`            | Ceph cluster identifier                                     |
-| `<auth-token>`            | Ceph user’s authentication key                              |
+| Placeholder                          | Description                                                   |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `<master-1-ip>` … `<master-3-ip>`   | IP addresses of control‑plane nodes (numbered 1–3)           |
+| `<worker-1-ip>` … `<worker-3-ip>`   | IP addresses of worker nodes (numbered 1–3)                  |
+| `<ssh-user>`                         | Linux user for k0sctl SSH connections                        |
+| `<local-repo>`                       | Base URL of Nexus mirror for GitHub artifacts & OCI images   |
+| `<keepalive-vip>`                    | Virtual IP for external kubectl/API‑server access            |
+| `<keepalive-auth-pass>`              | Password for Keepalived VRRP authentication                  |
+| `<10th-ip-in-service-cidr>`          | 10th IP in the Service CIDR used for CoreDNS **              |
+| Optional parameters                  |                                                               |
+| `<mon-1-ip>` … `<mon-3-ip>`         | IPs of Ceph monitor nodes                                     |
+| `<mon-1-port>` … `<mon-3-port>`     | Corresponding ports for each Ceph monitor *                   |
+| `<cluster-id>`                       | Ceph cluster identifier                                       |
+| `<auth-token>`                       | Ceph user’s authentication key                               |
 
 \* Ceph monitors support two “messenger” protocols – the original legacy v1 and the newer v2 (also called msgr2). The v1 protocol (default port 6789) is the long‑standing on‑wire format, while v2 (default port 3300) introduces a revised wire protocol with encryption, better authentication payload encapsulation, and more
 
@@ -118,9 +120,9 @@ sudo bash -c "printf '%s\n' 'fs.inotify.max_user_instances = 1280' 'fs.inotify.m
 ## CoreDNS Configuration Note
 
 - Changing the CoreDNS ConfigMap using k0s is not supported yet, as discussed in [Issue 4459](https://github.com/k0sproject/k0s/issues/4459) and [Issue 4021](https://github.com/k0sproject/k0s/issues/4021).
-- Consequently, CoreDNS is disabled by default and its configuration relies on a [Helm chart](https://github.com/coredns/helm) instead. Controllers are started with `--disable-components=coredns`, and workers with `--kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"`, to be filled in**.
+- Consequently, CoreDNS is disabled by default and its configuration relies on a [Helm chart](https://github.com/coredns/helm) instead. Controllers are started with `--disable-components=coredns`, and workers with `--kubelet-extra-args="--cluster-dns=<10th-ip-in-service-cidr>"`, to be filled in**.
 
-** The kubelet’s ClusterDNS setting is a list of IPs that all pods on that node will use for DNS resolution instead of the host’s `/etc/resolv.conf` nameservers. When you set `--cluster-dns`, the kubelet writes those IPs into each Pod’s `/etc/resolv.conf` as nameserver entries. In k0sctl, you supply this via `--kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"`. By convention, Kubernetes reserves the 10th IP in the Service CIDR for DNS (e.g. `10.96.0.10`). This static allocation avoids collisions with dynamically assigned Service IPs. See the [Kubernetes docs](https://kubernetes.io/docs/concepts/services-networking/cluster-ip-allocation/#why-do-you-need-to-reserve-service-cluster-ips). The Service CIDR defaults to `10.96.0.0/12`, which results in `10.96.0.10` for the DNS IP.
+** The kubelet’s ClusterDNS setting is a list of IPs that all pods on that node will use for DNS resolution instead of the host’s `/etc/resolv.conf` nameservers. When you set `--cluster-dns`, the kubelet writes those IPs into each Pod’s `/etc/resolv.conf` as nameserver entries. In k0sctl, you supply this via `--kubelet-extra-args="--cluster-dns=<10th-ip-in-service-cidr>"`. By convention, Kubernetes reserves the 10th IP in the Service CIDR for DNS (e.g. `10.96.0.10`). This static allocation avoids collisions with dynamically assigned Service IPs. See the [Kubernetes docs](https://kubernetes.io/docs/concepts/services-networking/cluster-ip-allocation/#why-do-you-need-to-reserve-service-cluster-ips). The Service CIDR defaults to `10.96.0.0/12`, which results in `10.96.0.10` for the DNS IP.
 
 
 ## Telemetry
@@ -166,13 +168,13 @@ sudo bash -c "printf '%s\n' 'fs.inotify.max_user_instances = 1280' 'fs.inotify.m
 - Kubernetes can be upgraded by changing the version in the cluster configuration YAML file.
 - Running the upgrade job in CI pipeline will result in a backup creation and upgrade which you can use to revert if anything goes wrong after upgrade.
 
-## Retrive kubeconfig
+## Retrieve kubeconfig
 
-- The kubeconfig CI job will retrive kubeconfig for you and stores it as an artifact so you can download and use it later.
+- The kubeconfig CI job will retrieve kubeconfig for you and stores it as an artifact so you can download and use it later.
 
 ## Install & Remove cluster
 
-These job are meant for edge use cases like:
+These jobs are meant for edge use cases like:
 - initializing cluster for the first time (Install)
 - using ephemeral test clusters (Remove)
 and etc. because these jobs are not safe and if used out of place will result in disaster there is a fail safe that confirms these jobs before running them so have to run them manually then another confirm to use them.
@@ -284,7 +286,7 @@ extensions:
 ######## you could also use helm chart proxy instead ###################
 ########################################################################
 #     - name: ceph-csi                               ###################
-#       url: https://nexus.local/ceph                ###################
+#       url: https://<local-repo>/ceph               ###################
 ########################################################################
     charts:
       - name: ceph-csi-rbd
@@ -301,18 +303,18 @@ extensions:
             provisioner:
               create: true
           csiConfig:
-            - clusterID: "9d8b0c3b-00c6-4fdb-8ac7-d7ae0dfda41c"
+            - clusterID: "<cluster-id>"
               monitors:
-                - "192.168.1.1:6789"
-                - "192.168.1.2:6789"
-                - "192.168.1.3:6789"
+                - "<mon-1-ip>:<mon-1-port>"
+                - "<mon-2-ip>:<mon-2-port>"
+                - "<mon-3-ip>:<mon-3-port>"
           nodeplugin:
             registrar:
               image:
-                repository: nexus.local/sig-storage/csi-node-driver-registrar
+                repository: <local-repo>/sig-storage/csi-node-driver-registrar
             plugin:
               image:
-                repository: nexus.local/cephcsi/cephcsi
+                repository: <local-repo>/cephcsi/cephcsi
           provisioner:
             replicaCount: 3
             strategy:
@@ -321,22 +323,22 @@ extensions:
                 maxUnavailable: 50%
             provisioner:
               image:
-                repository: nexus.local/sig-storage/csi-provisioner
+                repository: <local-repo>/sig-storage/csi-provisioner
             attacher:
               enabled: true
               image:
-                repository: nexus.local/sig-storage/csi-attacher
+                repository: <local-repo>/sig-storage/csi-attacher
             resizer:
               enabled: true
               image:
-                repository: nexus.local/sig-storage/csi-resizer
+                repository: <local-repo>/sig-storage/csi-resizer
             snapshotter:
               image:
-                repository: nexus.local/sig-storage/csi-snapshotter
+                repository: <local-repo>/sig-storage/csi-snapshotter
           storageClass:
             create: true
             name: csi-rbd-sc
-            clusterID: 9d8b0c3b-00c6-4fdb-8ac7-d7ae0dfda41c
+            clusterID: <cluster-id>
             pool: kubernetes
             provisionerSecret: csi-rbd-secret
             controllerExpandSecret: csi-rbd-secret
@@ -348,7 +350,7 @@ extensions:
             create: true
             name: csi-rbd-secret
             userID: kubernetes
-            userKey: AQDIhxRoox5uNBAAUljjJ3S9LVN27i63Paa0Iw==
+            userKey: <auth-token>
           kubeletDir: /var/lib/k0s/kubelet
         namespace: ceph-csi-rbd
 ```
@@ -367,13 +369,13 @@ Alternatively, you can proxy OCI‑compatible registries via Nexus without speci
 
 ```yaml
             - name: contour
-              chartname: oci://nexus.local/bitnamicharts/contour
+              chartname: oci://<local-repo>/bitnamicharts/contour
               version: "21.0.7"
               timeout: 5m
               order: 3
               values: |
                 global:
-                  imageRegistry: "nexus.local"
+                  imageRegistry: "<local-repo>"
                   security:
                     allowInsecureImages: true
                 envoy:

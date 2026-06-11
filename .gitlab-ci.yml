@@ -13,7 +13,7 @@ before_script:
 Install:
   stage: Cluster_ops
   image: <local-repo>/alpine:latest
-  manual_confirmation: "Confirm cluster installation wihtout backup"
+  manual_confirmation: "Confirm cluster installation without backup"
   script:
     - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
     - chmod +x k0sctl-linux-amd64
@@ -69,6 +69,7 @@ Upgrade:
 
 kubeconfig:
   stage: Cluster_ops
+  image: <local-repo>/alpine:latest
   script:
     - cd k0s && wget https://<local-repo>/repository/github/k0sproject/k0sctl/releases/latest/download/k0sctl-linux-amd64 --quiet --no-check-certificate
     - chmod +x k0sctl-linux-amd64

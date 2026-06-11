@@ -6,8 +6,8 @@ metadata:
 spec:
   hosts:
   - ssh:
-      address: <master 1 ip>
-      user: <user>
+      address: <master-1-ip>
+      user: <ssh-user>
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: controller
@@ -17,16 +17,16 @@ spec:
     - --disable-components=windows-node
     - --debug
     uploadBinary: false
-    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    k0sDownloadURL: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
       - name: bundle-file
-        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        src: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
   - ssh:
-      address: <master 2 ip>
-      user: <user>
+      address: <master-2-ip>
+      user: <ssh-user>
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: controller
@@ -36,16 +36,16 @@ spec:
     - --disable-components=windows-node
     - --debug
     uploadBinary: false
-    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    k0sDownloadURL: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
       - name: bundle-file
-        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        src: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
   - ssh:
-      address: <master 3 ip>
-      user: <user>
+      address: <master-3-ip>
+      user: <ssh-user>
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: controller
@@ -55,28 +55,28 @@ spec:
     - --disable-components=windows-node
     - --debug
     uploadBinary: false
-    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    k0sDownloadURL: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
       - name: bundle-file
-        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        src: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
   - ssh:
-      address: <worker 1 ip>
-      user: <user>
+      address: <worker-1-ip>
+      user: <ssh-user>
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
-    - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
+    - --kubelet-extra-args="--cluster-dns=<10th-ip-in-service-cidr>"
     - --debug
     uploadBinary: false
-    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    k0sDownloadURL: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
       - name: bundle-file
-        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        src: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
     hooks:
@@ -84,20 +84,20 @@ spec:
         after:
           - sudo k0s ctr images prune --all
   - ssh:
-      address: <worker 2 ip>
-      user: <user>
+      address: <worker-2-ip>
+      user: <ssh-user>
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
-    - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
+    - --kubelet-extra-args="--cluster-dns=<10th-ip-in-service-cidr>"
     - --debug
     uploadBinary: false
-    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    k0sDownloadURL: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
       - name: bundle-file
-        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        src: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
     hooks:
@@ -105,20 +105,20 @@ spec:
         after:
           - sudo k0s ctr images prune --all
   - ssh:
-      address: <worker 3 ip>
-      user: <user>
+      address: <worker-3-ip>
+      user: <ssh-user>
       port: 22
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
-    - --kubelet-extra-args="--cluster-dns=<10th IP in the Service CIDR>"
+    - --kubelet-extra-args="--cluster-dns=<10th-ip-in-service-cidr>"
     - --debug
     uploadBinary: false
-    k0sDownloadURL: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    k0sDownloadURL: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
     privateInterface: enp0s3
     files:
       - name: bundle-file
-        src: https://<local repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        src: https://<local-repo>/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
         dstDir: /var/lib/k0s/images/
         perm: 0755
     hooks:
@@ -148,7 +148,7 @@ spec:
       spec:
         api:
           sans:
-          - <keepalive vip>
+          - <keepalive-vip>
         network:
           provider: calico
           calico:
@@ -161,10 +161,10 @@ spec:
             type: Keepalived
             keepalived:
               vrrpInstances:
-              - virtualIPs: ["<keepalive vip>/32"]
-                authPass: "ieLoo0id"
+              - virtualIPs: ["<keepalive-vip>/32"]
+                authPass: "<keepalive-auth-pass>"
               virtualServers:
-              - ipAddress: "<keepalive vip>"
+              - ipAddress: "<keepalive-vip>"
         images:
           default_pull_policy: Never
         telemetry:
@@ -174,9 +174,9 @@ spec:
             concurrencyLevel: 1
             repositories:
             - name: ceph-csi
-              url: https://<local repo>/ceph
+              url: https://<local-repo>/ceph
             - name: coredns
-              url: https://<local repo>/coredns
+              url: https://<local-repo>/coredns
             charts:
             - name: coredns
               chartname: coredns/coredns
@@ -185,7 +185,7 @@ spec:
               order: 1
               values: |
                 image:
-                  repository: <local repo>/coredns/coredns
+                  repository: <local-repo>/coredns/coredns
                 replicaCount: 2
                 servers:
                 - zones:
@@ -241,7 +241,7 @@ spec:
                   enabled: false
                 serviceType: "ClusterIP"
                 service:
-                  clusterIP: "<10th IP in the Service CIDR>"
+                  clusterIP: "<10th-ip-in-service-cidr>"
               namespace: kube-system
             - name: ceph-csi-rbd
               chartname: ceph-csi/ceph-csi-rbd
@@ -257,20 +257,20 @@ spec:
                   provisioner:
                     create: true
                 csiConfig:
-                  - clusterID: "<cluster ID>"
+                  - clusterID: "<cluster-id>"
                     monitors:
-                      - "<mon 1 ip>:<mon 1 port>"
-                      - "<mon 2 ip>:<mon 2 port>"
-                      - "<mon 3 ip>:<mon 3 port>"
+                      - "<mon-1-ip>:<mon-1-port>"
+                      - "<mon-2-ip>:<mon-2-port>"
+                      - "<mon-3-ip>:<mon-3-port>"
 
                 nodeplugin:
                   name: nodeplugin
                   registrar:
                     image:
-                      repository: <local repo>/sig-storage/csi-node-driver-registrar
+                      repository: <local-repo>/sig-storage/csi-node-driver-registrar
                   plugin:
                     image:
-                      repository: <local repo>/cephcsi/cephcsi
+                      repository: <local-repo>/cephcsi/cephcsi
                 provisioner:
                   name: provisioner
                   replicaCount: 3
@@ -280,28 +280,28 @@ spec:
                       maxUnavailable: 50%
                   provisioner:
                     image:
-                      repository: <local repo>/sig-storage/csi-provisioner
+                      repository: <local-repo>/sig-storage/csi-provisioner
                     resources: {}
                   attacher:
                     name: attacher
                     enabled: true
                     image:
-                      repository: <local repo>/sig-storage/csi-attacher
+                      repository: <local-repo>/sig-storage/csi-attacher
                   resizer:
                     name: resizer
                     enabled: true
                     image:
-                      repository: <local repo>/sig-storage/csi-resizer
+                      repository: <local-repo>/sig-storage/csi-resizer
                   snapshotter:
                     image:
-                      repository: <local repo>/sig-storage/csi-snapshotter
+                      repository: <local-repo>/sig-storage/csi-snapshotter
 
                 storageClass:
                   create: true
                   name: csi-rbd-sc
                   annotations:
                     storageclass.kubernetes.io/is-default-class: "true"
-                  clusterID: <cluster ID>
+                  clusterID: <cluster-id>
                   pool: kubernetes
                   provisionerSecret: csi-rbd-secret
                   provisionerSecretNamespace: ""
@@ -317,6 +317,6 @@ spec:
                   create: true
                   name: csi-rbd-secret
                   userID: kubernetes
-                  userKey: <token>
+                  userKey: <auth-token>
                 kubeletDir: /var/lib/k0s/kubelet
               namespace: ceph-csi-rbd

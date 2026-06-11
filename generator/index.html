@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CtlBreeze – Cluster Config Generator</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header .logo { font-size: 1.1rem; font-weight: 700; color: #58a6ff; letter-spacing: -0.5px; }
+    header .sep { color: #30363d; }
+    header .subtitle { color: #8b949e; font-size: 0.82rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 520px 1fr;
+      height: calc(100vh - 49px);
+    }
+
+    .form-panel { overflow-y: auto; padding: 20px; border-right: 1px solid #30363d; }
+    .preview-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .preview-toolbar {
+      padding: 12px 20px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #161b22;
+      flex-shrink: 0;
+    }
+    .preview-toolbar .filename { font-size: 0.82rem; color: #8b949e; font-family: 'JetBrains Mono', monospace; }
+    .toolbar-actions { display: flex; gap: 8px; }
+
+    .btn-icon {
+      background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+      color: #8b949e; cursor: pointer; font-size: 0.78rem; padding: 5px 12px; transition: all 0.15s;
+    }
+    .btn-icon:hover { border-color: #58a6ff; color: #58a6ff; }
+    .btn-icon.success { border-color: #3fb950 !important; color: #3fb950 !important; }
+    .btn-download {
+      background: #238636; border: 1px solid #2ea043; border-radius: 6px;
+      color: #fff; cursor: pointer; font-size: 0.78rem; font-weight: 500; padding: 5px 14px; transition: background 0.15s;
+    }
+    .btn-download:hover { background: #2ea043; }
+
+    pre {
+      flex: 1; overflow: auto; padding: 20px;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.73rem; line-height: 1.65; color: #e6edf3; white-space: pre; margin: 0;
+    }
+
+    /* Sections */
+    .section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    .section-header {
+      padding: 10px 14px; background: #1c2128; border-bottom: 1px solid #30363d;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none; transition: background 0.1s;
+    }
+    .section-header:hover { background: #22272e; }
+    .section-header h2 { font-size: 0.82rem; font-weight: 600; color: #58a6ff; }
+    .section-header-right { display: flex; align-items: center; gap: 10px; }
+    .chevron { color: #6e7681; font-size: 0.7rem; transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+    .section-body { padding: 14px; }
+    .section-body.disabled { opacity: 0.38; pointer-events: none; }
+
+    /* Sub-groups inside sections */
+    .sub-group { margin-bottom: 16px; }
+    .sub-group:last-child { margin-bottom: 0; }
+    .sub-group-title {
+      font-size: 0.7rem; font-weight: 700; color: #6e7681;
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;
+    }
+    .sub-divider { border: none; border-top: 1px solid #21262d; margin: 14px 0; }
+
+    /* Toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 6px; }
+    .toggle-label { font-size: 0.72rem; color: #6e7681; }
+    .toggle-switch { position: relative; display: inline-block; width: 34px; height: 19px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #30363d; transition: .2s; border-radius: 19px;
+    }
+    .toggle-slider::before {
+      position: absolute; content: ""; height: 13px; width: 13px;
+      left: 3px; bottom: 3px; background: #8b949e; transition: .2s; border-radius: 50%;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #238636; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(15px); background: #fff; }
+
+    /* Fields */
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 0.75rem; color: #8b949e; margin-bottom: 4px; font-weight: 500; }
+    .field label .req { color: #f85149; margin-left: 2px; }
+    .field input, .field select {
+      width: 100%; background: #010409; border: 1px solid #30363d; border-radius: 6px;
+      padding: 7px 10px; color: #e6edf3; font-size: 0.82rem; outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.1); }
+    .field input::placeholder { color: #3d444d; }
+    .field select option { background: #161b22; }
+    .field .hint { font-size: 0.7rem; color: #6e7681; margin-top: 3px; line-height: 1.4; }
+    .field .hint .computed { color: #3fb950; font-family: monospace; }
+    .field .hint code { font-family: monospace; font-size: 0.72rem; background: #21262d; padding: 1px 4px; border-radius: 3px; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* Inline option row (label + toggle/checkbox) */
+    .opt-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.8rem; color: #c9d1d9; }
+    .opt-row:last-child { margin-bottom: 0; }
+    .opt-row input[type=checkbox] { width: 14px !important; height: 14px; accent-color: #58a6ff; cursor: pointer; flex-shrink: 0; }
+    .opt-row label { cursor: pointer; line-height: 1.3; }
+    .opt-row label.muted { color: #8b949e; font-size: 0.75rem; }
+
+    /* Checkbox component grid */
+    .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 6px; }
+    .comp-item { display: flex; align-items: flex-start; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; transition: background 0.1s; }
+    .comp-item:hover { background: #21262d; }
+    .comp-item input[type=checkbox] { width: 13px !important; height: 13px; accent-color: #58a6ff; cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+    .comp-item .comp-label { font-size: 0.75rem; font-family: monospace; color: #c9d1d9; }
+    .comp-item .comp-note { font-size: 0.65rem; color: #6e7681; display: block; line-height: 1.2; }
+    .comp-item.danger .comp-label { color: #f85149; }
+    .comp-item.danger .comp-note { color: #e15241; }
+
+    /* Nodes */
+    .node-list { display: flex; flex-direction: column; gap: 8px; }
+    .node-card { background: #010409; border: 1px solid #30363d; border-radius: 6px; padding: 10px 12px; }
+    .node-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+    .node-num {
+      font-size: 0.7rem; font-weight: 700; color: #6e7681; background: #21262d;
+      padding: 2px 7px; border-radius: 4px; font-family: monospace; flex-shrink: 0;
+    }
+    .role-select {
+      background: #161b22; border: 1px solid #30363d; border-radius: 4px;
+      color: #e6edf3; font-size: 0.72rem; padding: 3px 6px; outline: none; cursor: pointer; flex-shrink: 0;
+    }
+    .role-select:focus { border-color: #58a6ff; }
+    .role-select option { background: #161b22; }
+    .role-controller { border-color: #1f6feb !important; color: #58a6ff !important; }
+    .role-worker     { border-color: #1a7f37 !important; color: #3fb950 !important; }
+    .role-both       { border-color: #6e40c9 !important; color: #bc8cff !important; }
+    .node-spacer { flex: 1; }
+    .btn-remove {
+      background: none; border: 1px solid transparent; border-radius: 4px;
+      color: #6e7681; cursor: pointer; font-size: 0.72rem; padding: 2px 7px; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-remove:hover:not(:disabled) { border-color: #f85149; color: #f85149; background: rgba(248,81,73,0.08); }
+    .btn-remove:disabled { opacity: 0.3; cursor: default; }
+    .node-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .btn-add-node {
+      display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+      background: none; border: 1px dashed #30363d; border-radius: 6px; color: #6e7681;
+      cursor: pointer; font-size: 0.78rem; padding: 8px; margin-top: 8px; transition: all 0.15s;
+    }
+    .btn-add-node:hover { border-color: #58a6ff; color: #58a6ff; background: rgba(88,166,255,0.05); }
+
+    /* Zone file cards */
+    .zone-card { background: #010409; border: 1px solid #30363d; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+    .zone-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+    .btn-del-row {
+      background: none; border: 1px solid transparent; border-radius: 4px;
+      color: #6e7681; cursor: pointer; font-size: 0.75rem; padding: 4px 6px; transition: all 0.1s; flex-shrink: 0;
+    }
+    .btn-del-row:hover { border-color: #f85149; color: #f85149; }
+    .field textarea {
+      width: 100%; background: #010409; border: 1px solid #30363d; border-radius: 6px;
+      padding: 7px 10px; color: #e6edf3; font-size: 0.72rem; outline: none; transition: border-color 0.15s;
+      font-family: 'JetBrains Mono', 'Consolas', monospace; resize: vertical; min-height: 90px; line-height: 1.55;
+    }
+    .field textarea:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.1); }
+    .field textarea::placeholder { color: #3d444d; }
+
+    /* Alert */
+    .alert { border-radius: 6px; font-size: 0.75rem; padding: 8px 10px; margin-bottom: 10px; line-height: 1.5; }
+    .alert-warn { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.3); color: #d29922; }
+    .alert-info { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); color: #58a6ff; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; grid-template-rows: auto 50vh; height: auto; }
+      .preview-panel { height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <span class="logo">CtlBreeze</span>
+    <span class="sep">›</span>
+    <span class="subtitle">k0s Cluster Config Generator</span>
+  </header>
+
+  <div class="layout">
+    <!-- ═══════════ FORM PANEL ═══════════ -->
+    <div class="form-panel">
+
+      <!-- 1. Basic Settings -->
+      <div class="section">
+        <div class="section-header" @click="toggle('basic')">
+          <h2>⚙ Basic Settings</h2>
+          <span class="chevron" :class="{ open: open.basic }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.basic">
+          <div class="field">
+            <label>Local Repository Host <span class="req">*</span></label>
+            <input v-model="form.localRepo" placeholder="nexus.example.com" />
+            <div class="hint">Hostname / IP of your Nexus artifact mirror (no https://)</div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>SSH User <span class="req">*</span></label>
+              <input v-model="form.sshUser" placeholder="ubuntu" />
+            </div>
+            <div class="field">
+              <label>SSH Port</label>
+              <input v-model="form.sshPort" placeholder="22" />
+              <div class="hint">Leave empty → uses <code>&lt;ssh-port&gt;</code> placeholder</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>k0s Version</label>
+              <select v-model="form.k0sVersion">
+                <option v-if="k0sVersionsLoading" disabled value="">Fetching versions…</option>
+                <option v-for="ver in k0sVersions" :key="ver" :value="ver">{{ ver }}</option>
+              </select>
+              <div class="hint" v-if="k0sVersionsFailed">Could not reach GitHub — showing bundled list</div>
+            </div>
+            <div class="field">
+              <label>Default Network Interface</label>
+              <input v-model="form.netInterface" placeholder="enp0s3" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Cluster Config -->
+      <div class="section">
+        <div class="section-header" @click="toggle('cluster')">
+          <h2>🗂 Cluster Config</h2>
+          <span class="chevron" :class="{ open: open.cluster }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.cluster">
+          <div class="field-row">
+            <div class="field">
+              <label>Image Pull Policy</label>
+              <select v-model="form.imagePullPolicy">
+                <option value="Never">Never (airgap – recommended)</option>
+                <option value="IfNotPresent">IfNotPresent</option>
+                <option value="Always">Always</option>
+              </select>
+              <div class="hint">Applied to all k0s-managed images</div>
+            </div>
+            <div class="field">
+              <label>Telemetry</label>
+              <select v-model="form.telemetryEnabled">
+                <option value="false">Disabled (recommended)</option>
+                <option value="true">Enabled</option>
+              </select>
+              <div class="hint">Anonymous usage data sent to k0s maintainers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Nodes -->
+      <div class="section">
+        <div class="section-header" @click="toggle('nodes')">
+          <h2>🖥 Nodes</h2>
+          <span class="chevron" :class="{ open: open.nodes }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.nodes">
+          <div class="alert alert-warn" v-if="controllerCount > 0 && controllerCount % 2 === 0">
+            Even number of controller-capable nodes ({{ controllerCount }}) — use an odd count (1, 3, 5) for etcd quorum.
+          </div>
+          <div class="alert alert-info" v-if="controllerCount === 0">
+            Add at least one node with role <strong>controller</strong> or <strong>controller+worker</strong>.
+          </div>
+          <div class="node-list">
+            <div class="node-card" v-for="(node, i) in form.nodes" :key="'n'+i">
+              <div class="node-card-header">
+                <span class="node-num">node-{{ i + 1 }}</span>
+                <select class="role-select" :class="roleClass(node.role)" v-model="node.role">
+                  <option value="controller">controller</option>
+                  <option value="worker">worker</option>
+                  <option value="controller+worker">controller+worker</option>
+                </select>
+                <span class="node-spacer"></span>
+                <button class="btn-remove" @click="removeNode(i)" :disabled="form.nodes.length === 1">✕ Remove</button>
+              </div>
+              <div class="node-fields">
+                <div class="field">
+                  <label>IP Address <span class="req">*</span></label>
+                  <input v-model="node.ip" placeholder="192.168.1.x" />
+                </div>
+                <div class="field">
+                  <label>Interface Override</label>
+                  <input v-model="node.iface" :placeholder="form.netInterface || 'enp0s3'" />
+                  <div class="hint">Leave empty to use default</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-add-node" @click="addNode('worker')">+ Add Node</button>
+        </div>
+      </div>
+
+      <!-- 4. Install Flags -->
+      <div class="section">
+        <div class="section-header" @click="toggle('flags')">
+          <h2>🚩 Install Flags</h2>
+          <span class="chevron" :class="{ open: open.flags }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.flags">
+
+          <div class="sub-group">
+            <div class="sub-group-title">Disable Components — controller &amp; controller+worker nodes</div>
+            <div class="comp-grid">
+              <label class="comp-item" v-for="comp in ALL_COMPONENTS" :key="comp.name" :class="{ danger: comp.dangerous }">
+                <input type="checkbox" :value="comp.name" v-model="form.disabledComponents" />
+                <span>
+                  <span class="comp-label">{{ comp.name }}</span>
+                  <span class="comp-note">{{ comp.note }}</span>
+                </span>
+              </label>
+            </div>
+            <div class="alert alert-warn" v-if="hasDangerousComponents" style="margin-top:8px;margin-bottom:0">
+              One or more selected components are critical — disabling them will break your cluster.
+            </div>
+          </div>
+
+          <hr class="sub-divider" />
+
+          <div class="sub-group">
+            <div class="sub-group-title">Global Flags — all nodes</div>
+            <div class="opt-row">
+              <input type="checkbox" id="chk-debug" v-model="form.debugEnabled" />
+              <label for="chk-debug"><code>--debug</code> — verbose k0s output during install/upgrade</label>
+            </div>
+            <div class="opt-row">
+              <input type="checkbox" id="chk-no-taints" v-model="form.noTaints" />
+              <label for="chk-no-taints"><code>--no-taints</code> — remove default taints from controller nodes (useful for controller+worker)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. HA -->
+      <div class="section">
+        <div class="section-header" @click="toggle('ha')">
+          <h2>🛡 High Availability (Keepalived)</h2>
+          <span class="chevron" :class="{ open: open.ha }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.ha">
+          <div class="field-row">
+            <div class="field">
+              <label>Virtual IP (VIP) <span class="req">*</span></label>
+              <input v-model="form.vip" placeholder="192.168.1.100" />
+              <div class="hint">Free IP on the same subnet as your controllers</div>
+            </div>
+            <div class="field">
+              <label>VRRP Auth Password <span class="req">*</span></label>
+              <input v-model="form.vrrpPass" type="password" placeholder="strong-password" />
+              <div class="hint">Max 8 chars (RFC 2338 VRRP limit)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Networking & DNS -->
+      <div class="section">
+        <div class="section-header" @click="toggle('network')">
+          <h2>🌐 Networking &amp; DNS</h2>
+          <span class="chevron" :class="{ open: open.network }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.network">
+
+          <div class="sub-group">
+            <div class="sub-group-title">Network</div>
+            <div class="field">
+              <label>Service CIDR</label>
+              <input v-model="form.serviceCIDR" placeholder="10.96.0.0/12" />
+              <div class="hint">CoreDNS ClusterIP (10th IP) → <span class="computed">{{ computedDnsIP || '—' }}</span></div>
+            </div>
+            <div class="field">
+              <label>Calico WireGuard Encryption</label>
+              <select v-model="form.wireguard">
+                <option value="true">Enabled (recommended)</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+          </div>
+
+          <hr class="sub-divider" />
+
+          <div class="sub-group">
+            <div class="sub-group-title">CoreDNS Helm Chart</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Chart Version</label>
+                <input v-model="form.coreDnsVersion" placeholder="1.45.0" />
+              </div>
+              <div class="field">
+                <label>Replicas</label>
+                <input v-model="form.coreDnsReplicas" placeholder="2" />
+              </div>
+            </div>
+          </div>
+
+          <hr class="sub-divider" />
+
+          <div class="sub-group">
+            <div class="sub-group-title">Custom DNS Zone Files</div>
+            <div class="hint" style="margin-bottom:8px">
+              Each zone file creates a dedicated CoreDNS server block with the <code>file</code> plugin and mounts the zone data at <code>/etc/coredns/&lt;domain&gt;.db</code>.
+              See <a href="https://coredns.io/2017/05/08/custom-dns-entries-for-kubernetes/" target="_blank" style="color:#58a6ff">CoreDNS zone file docs</a>.
+            </div>
+            <div v-if="form.zoneFiles.length === 0" style="font-size:0.75rem;color:#484f58;margin-bottom:8px">
+              No zone files — add one below.
+            </div>
+            <div v-for="(zone, i) in form.zoneFiles" :key="'z'+i" class="zone-card">
+              <div class="zone-card-header">
+                <span class="node-num">zone-{{ i + 1 }}</span>
+                <span class="node-spacer"></span>
+                <button class="btn-del-row" @click="removeZoneFile(i)" title="Remove zone">✕ Remove</button>
+              </div>
+              <div class="field">
+                <label>Domain <span class="req">*</span></label>
+                <input v-model="zone.domain" placeholder="example.com" style="font-family:monospace;font-size:0.78rem" />
+                <div class="hint">Zone file will be mounted as <code>/etc/coredns/{{ zone.domain || 'example.com' }}.db</code></div>
+              </div>
+              <div class="field">
+                <label>Zone File Contents</label>
+                <textarea v-model="zone.contents" :placeholder="zonePlaceholder" rows="5"></textarea>
+                <div class="hint">Standard DNS zone file format (RFC 1035). SOA and NS records are required.</div>
+              </div>
+            </div>
+            <button class="btn-add-node" @click="addZoneFile()" style="margin-top:4px">+ Add Zone File</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Ceph CSI -->
+      <div class="section">
+        <div class="section-header" @click="toggle('ceph')">
+          <h2>💾 Ceph CSI (RBD Storage)</h2>
+          <div class="section-header-right">
+            <div class="toggle-wrap" @click.stop>
+              <span class="toggle-label">{{ form.cephEnabled ? 'On' : 'Off' }}</span>
+              <label class="toggle-switch">
+                <input type="checkbox" v-model="form.cephEnabled" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <span class="chevron" :class="{ open: open.ceph }">▼</span>
+          </div>
+        </div>
+        <div class="section-body" v-show="open.ceph" :class="{ disabled: !form.cephEnabled }">
+          <div class="alert alert-info">
+            Run <code>ceph fsid</code> for Cluster ID · <code>ceph auth get-key client.kubernetes</code> for Auth Token.
+          </div>
+          <div class="field">
+            <label>Ceph Cluster ID <span class="req">*</span></label>
+            <input v-model="form.cephClusterID" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="font-family:monospace;font-size:0.78rem" />
+          </div>
+          <div class="field">
+            <label>Ceph Auth Token (userKey) <span class="req">*</span></label>
+            <input v-model="form.cephAuthToken" type="password" placeholder="AQD..." />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Ceph CSI Chart Version</label>
+              <input v-model="form.cephCsiVersion" placeholder="3.15.1" />
+            </div>
+            <div class="field">
+              <label>Provisioner Replicas</label>
+              <input v-model="form.cephProvReplicas" placeholder="3" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Ceph Monitors <span class="req">*</span></label>
+            <div class="node-list">
+              <div class="node-card" v-for="(mon, i) in form.cephMonitors" :key="'c'+i">
+                <div class="node-card-header">
+                  <span class="node-num">mon-{{ i + 1 }}</span>
+                  <span class="node-spacer"></span>
+                  <button class="btn-remove" @click="removeMon(i)" :disabled="form.cephMonitors.length === 1">✕</button>
+                </div>
+                <div class="node-fields">
+                  <div class="field">
+                    <label>IP Address</label>
+                    <input v-model="mon.ip" placeholder="192.168.1.30" />
+                  </div>
+                  <div class="field">
+                    <label>Port</label>
+                    <input v-model="mon.port" placeholder="6789" />
+                    <div class="hint">v1 (msgr1): 6789 · v2 (msgr2): 3300</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="btn-add-node" @click="addMon()">+ Add Monitor</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. k0sctl Options -->
+      <div class="section">
+        <div class="section-header" @click="toggle('options')">
+          <h2>🔧 k0sctl Options</h2>
+          <span class="chevron" :class="{ open: open.options }">▼</span>
+        </div>
+        <div class="section-body" v-show="open.options">
+
+          <!-- Wait -->
+          <div class="sub-group">
+            <div class="sub-group-title">Wait</div>
+            <div class="opt-row">
+              <input type="checkbox" id="opt-wait" v-model="form.optWaitEnabled" />
+              <label for="opt-wait">Wait for k0s to be ready after each service restart</label>
+            </div>
+          </div>
+
+          <hr class="sub-divider" />
+
+          <!-- Drain -->
+          <div class="sub-group">
+            <div class="sub-group-title">Drain — before upgrade / reset</div>
+            <div class="opt-row">
+              <input type="checkbox" id="opt-drain" v-model="form.optDrainEnabled" />
+              <label for="opt-drain">Enable node draining before disruptive operations</label>
+            </div>
+            <div class="field-row" style="margin-top:10px">
+              <div class="field">
+                <label>Grace Period</label>
+                <input v-model="form.optDrainGracePeriod" placeholder="2m" />
+                <div class="hint">Time for pods to gracefully terminate. e.g. 2m, 90s</div>
+              </div>
+              <div class="field">
+                <label>Timeout</label>
+                <input v-model="form.optDrainTimeout" placeholder="5m" />
+                <div class="hint">Max drain duration. e.g. 5m, 10m</div>
+              </div>
+            </div>
+            <div class="opt-row" style="margin-top:8px">
+              <input type="checkbox" id="opt-force" v-model="form.optDrainForce" />
+              <label for="opt-force">Force drain (evict pods not managed by a controller)</label>
+            </div>
+            <div class="opt-row">
+              <input type="checkbox" id="opt-ds" v-model="form.optDrainIgnoreDaemonSets" />
+              <label for="opt-ds">Ignore DaemonSet pods when draining</label>
+            </div>
+            <div class="opt-row">
+              <input type="checkbox" id="opt-emptydir" v-model="form.optDrainDeleteEmptyDir" />
+              <label for="opt-emptydir">Continue despite pods using emptyDir volumes</label>
+            </div>
+            <div class="field-row" style="margin-top:10px">
+              <div class="field">
+                <label>Skip Wait Timeout</label>
+                <input v-model="form.optDrainSkipWaitTimeout" placeholder="0s (disabled)" />
+                <div class="hint">Skip pods with old DeletionTimestamp. Must be &gt; 0s to activate.</div>
+              </div>
+              <div class="field">
+                <label>Pod Selector</label>
+                <input v-model="form.optDrainPodSelector" placeholder="e.g. app=myapp" />
+                <div class="hint">Label selector to filter which pods are drained</div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="sub-divider" />
+
+          <!-- EvictTaint -->
+          <div class="sub-group">
+            <div class="sub-group-title">Evict Taint — applied before service-affecting operations</div>
+            <div class="opt-row">
+              <input type="checkbox" id="opt-evict" v-model="form.optEvictEnabled" />
+              <label for="opt-evict">Apply evict taint before upgrade / reset</label>
+            </div>
+            <div class="field-row" style="margin-top:10px">
+              <div class="field">
+                <label>Taint</label>
+                <input v-model="form.optEvictTaint" placeholder="k0sctl.k0sproject.io/evict=true" style="font-family:monospace;font-size:0.78rem" />
+                <div class="hint">Must be in <code>key=value</code> format</div>
+              </div>
+              <div class="field">
+                <label>Effect</label>
+                <select v-model="form.optEvictEffect">
+                  <option value="NoSchedule">NoSchedule</option>
+                  <option value="NoExecute">NoExecute</option>
+                  <option value="PreferNoSchedule">PreferNoSchedule</option>
+                </select>
+                <div class="hint">NoExecute evicts running pods immediately</div>
+              </div>
+            </div>
+            <div class="opt-row" style="margin-top:8px">
+              <input type="checkbox" id="opt-evict-cw" v-model="form.optEvictControllerWorkers" />
+              <label for="opt-evict-cw">Also apply taint to <code>controller+worker</code> dual-role nodes</label>
+            </div>
+          </div>
+
+          <hr class="sub-divider" />
+
+          <!-- Concurrency -->
+          <div class="sub-group">
+            <div class="sub-group-title">Concurrency</div>
+            <div class="field-row three">
+              <div class="field">
+                <label>Host Limit</label>
+                <input v-model="form.optConcurrencyLimit" placeholder="30" />
+                <div class="hint">Max hosts operated concurrently</div>
+              </div>
+              <div class="field">
+                <label>Worker Disruption %</label>
+                <input v-model="form.optConcurrencyWorkerDisruption" placeholder="10" />
+                <div class="hint">% of workers disrupted simultaneously (0–100)</div>
+              </div>
+              <div class="field">
+                <label>Uploads</label>
+                <input v-model="form.optConcurrencyUploads" placeholder="6" />
+                <div class="hint">Max concurrent file uploads</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    <!-- end form-panel -->
+
+    <!-- ═══════════ PREVIEW PANEL ═══════════ -->
+    <div class="preview-panel">
+      <div class="preview-toolbar">
+        <span class="filename">k0s/cluster-definition.yaml</span>
+        <div class="toolbar-actions">
+          <button class="btn-icon" :class="{ success: copied }" @click="copyYaml">
+            {{ copied ? '✓ Copied' : '⎘ Copy' }}
+          </button>
+          <button class="btn-download" @click="downloadYaml">↓ Download</button>
+        </div>
+      </div>
+      <pre>{{ generatedYaml }}</pre>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const { createApp, reactive, computed, ref } = Vue;
+
+// Static list of all k0s disableable components (from k0s docs)
+const ALL_COMPONENTS = [
+  { name: 'coredns',                 note: 'Replace with Helm-deployed CoreDNS',  dangerous: false },
+  { name: 'autopilot',               note: 'k0s auto-upgrade controller',         dangerous: false },
+  { name: 'windows-node',            note: 'Windows node support',                dangerous: false },
+  { name: 'metrics-server',          note: 'Cluster metrics API',                 dangerous: false },
+  { name: 'update-prober',           note: 'k0s version update checks',           dangerous: false },
+  { name: 'konnectivity-server',     note: 'Node-to-API connectivity proxy',      dangerous: false },
+  { name: 'endpoint-reconciler',     note: 'Endpoint reconciliation',             dangerous: false },
+  { name: 'csr-approver',            note: 'CSR auto-approver',                   dangerous: false },
+  { name: 'applier-manager',         note: 'Manifest applier',                    dangerous: false },
+  { name: 'node-role',               note: 'Node role labels',                    dangerous: false },
+  { name: 'system-rbac',             note: 'System RBAC resources',               dangerous: false },
+  { name: 'worker-config',           note: 'Worker config reconciler',            dangerous: false },
+  { name: 'control-api',             note: 'k0s control plane API',               dangerous: false },
+  { name: 'helm',                    note: '⚠ Breaks Helm extensions!',           dangerous: true  },
+  { name: 'kube-proxy',              note: '⚠ Breaks service networking',         dangerous: true  },
+  { name: 'network-provider',        note: '⚠ Breaks pod networking (CNI)',       dangerous: true  },
+  { name: 'kube-controller-manager', note: '⚠ Critical – breaks cluster',        dangerous: true  },
+  { name: 'kube-scheduler',          note: '⚠ Critical – pods won\'t schedule',  dangerous: true  },
+];
+
+const DANGEROUS_NAMES = new Set(ALL_COMPONENTS.filter(c => c.dangerous).map(c => c.name));
+
+createApp({
+  setup() {
+    const copied = ref(false);
+
+    const open = reactive({
+      basic: true, cluster: true, nodes: true, flags: true,
+      ha: true, network: true, ceph: true, options: false,
+    });
+
+    const form = reactive({
+      // Basic
+      localRepo: '', sshUser: '', sshPort: '',
+      k0sVersion: 'v1.33.3+k0s.0', netInterface: 'enp0s3',
+
+      // Cluster config
+      imagePullPolicy: 'Never',
+      telemetryEnabled: 'false',
+
+      // Nodes
+      nodes: [
+        { ip: '', role: 'controller',       iface: '' },
+        { ip: '', role: 'controller',       iface: '' },
+        { ip: '', role: 'controller',       iface: '' },
+        { ip: '', role: 'worker',           iface: '' },
+        { ip: '', role: 'worker',           iface: '' },
+        { ip: '', role: 'worker',           iface: '' },
+      ],
+
+      // Install flags
+      disabledComponents: ['coredns', 'autopilot', 'windows-node'],
+      debugEnabled: true,
+      noTaints: false,
+
+      // HA
+      vip: '', vrrpPass: '',
+
+      // Networking
+      serviceCIDR: '10.96.0.0/12',
+      coreDnsVersion: '1.45.0', coreDnsReplicas: '2',
+      wireguard: 'true',
+      zoneFiles: [],
+
+      // Ceph
+      cephEnabled: true,
+      cephClusterID: '', cephAuthToken: '',
+      cephCsiVersion: '3.15.1', cephProvReplicas: '3',
+      cephMonitors: [
+        { ip: '', port: '6789' },
+        { ip: '', port: '6789' },
+        { ip: '', port: '6789' },
+      ],
+
+      // k0sctl options
+      optWaitEnabled: true,
+      optDrainEnabled: true,
+      optDrainGracePeriod: '2m', optDrainTimeout: '5m',
+      optDrainForce: true, optDrainIgnoreDaemonSets: true, optDrainDeleteEmptyDir: true,
+      optDrainSkipWaitTimeout: '', optDrainPodSelector: '',
+      optEvictEnabled: true,
+      optEvictTaint: 'k0sctl.k0sproject.io/evict=true',
+      optEvictEffect: 'NoSchedule',
+      optEvictControllerWorkers: false,
+      optConcurrencyLimit: '30', optConcurrencyWorkerDisruption: '10', optConcurrencyUploads: '6',
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function toggle(k) { open[k] = !open[k]; }
+
+    function addNode(role = 'worker') { form.nodes.push({ ip: '', role, iface: '' }); }
+    function removeNode(i) { if (form.nodes.length > 1) form.nodes.splice(i, 1); }
+    function addMon()           { form.cephMonitors.push({ ip: '', port: '6789' }); }
+    function removeMon(i)       { if (form.cephMonitors.length > 1) form.cephMonitors.splice(i, 1); }
+    function addZoneFile()      { form.zoneFiles.push({ domain: '', contents: '' }); }
+    function removeZoneFile(i)  { form.zoneFiles.splice(i, 1); }
+
+    // k0s version list — fetched from GitHub Releases API, falls back to bundled list
+    const K0S_FALLBACK = [
+      'v1.35.4+k0s.0','v1.34.7+k0s.0',
+      'v1.33.11+k0s.0','v1.33.4+k0s.0','v1.33.3+k0s.0','v1.33.2+k0s.0','v1.33.1+k0s.0',
+      'v1.32.13+k0s.0','v1.32.6+k0s.0',
+    ];
+    const k0sVersions      = ref(K0S_FALLBACK);
+    const k0sVersionsLoading = ref(true);
+    const k0sVersionsFailed  = ref(false);
+
+    fetch('https://api.github.com/repos/k0sproject/k0s/releases?per_page=40')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(releases => {
+        const tags = releases.filter(r => !r.prerelease).map(r => r.tag_name).slice(0, 25);
+        if (tags.length > 0) {
+          k0sVersions.value = tags;
+          if (!tags.includes(form.k0sVersion)) form.k0sVersion = tags[0];
+        }
+      })
+      .catch(() => { k0sVersionsFailed.value = true; })
+      .finally(() => { k0sVersionsLoading.value = false; });
+
+    const zonePlaceholder = `example.com. IN SOA ns1.example.com. admin.example.com. 2024010101 3600 900 604800 300
+example.com. IN NS  ns1.example.com.
+example.com. IN A   192.168.1.100
+*.example.com. IN A 192.168.1.100`;
+
+    function roleClass(role) {
+      if (role === 'controller') return 'role-controller';
+      if (role === 'worker')     return 'role-worker';
+      return 'role-both';
+    }
+
+    const controllerCount = computed(() =>
+      form.nodes.filter(n => n.role === 'controller' || n.role === 'controller+worker').length
+    );
+
+    const hasDangerousComponents = computed(() =>
+      form.disabledComponents.some(c => DANGEROUS_NAMES.has(c))
+    );
+
+    function nthIP(cidr, n) {
+      if (!cidr || !cidr.includes('/')) return '';
+      try {
+        const base = cidr.split('/')[0];
+        const parts = base.split('.').map(Number);
+        if (parts.length !== 4 || parts.some(isNaN)) return '';
+        let num = ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0;
+        num = (num + n) >>> 0;
+        return [num >>> 24, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
+      } catch { return ''; }
+    }
+
+    const computedDnsIP = computed(() => nthIP(form.serviceCIDR, 10));
+
+    const f = (val, placeholder) => (val && val.trim()) ? val.trim() : placeholder;
+
+    // ── YAML generation ──────────────────────────────────────────
+    const generatedYaml = computed(() => {
+      const repo  = f(form.localRepo,    '<local-repo>');
+      const user  = f(form.sshUser,      '<ssh-user>');
+      const port  = f(form.sshPort,      '<ssh-port>');
+      const ver   = f(form.k0sVersion,   'v1.33.3+k0s.0');
+      const iface = f(form.netInterface, 'enp0s3');
+      const vip   = f(form.vip,          '<keepalive-vip>');
+      const pass  = f(form.vrrpPass,     '<keepalive-auth-pass>');
+      const dnsIP = computedDnsIP.value || '<10th-ip-in-service-cidr>';
+      const dnsVer = f(form.coreDnsVersion,  '1.45.0');
+      const dnsRep = f(form.coreDnsReplicas, '2');
+
+      // ── Hosts ─────────────────────────────────────────────────
+      const roleCounts = { controller: 0, worker: 0, 'controller+worker': 0 };
+      const rolePrefix = { controller: 'master', worker: 'worker', 'controller+worker': 'ctrl-worker' };
+
+      const allHosts = form.nodes.map((n) => {
+        roleCounts[n.role]++;
+        const idx  = roleCounts[n.role];
+        const pfx  = rolePrefix[n.role];
+        const ip   = f(n.ip, `<${pfx}-${idx}-ip>`);
+        const ni   = (n.iface && n.iface.trim()) ? n.iface.trim() : iface;
+        const isCtrl = n.role === 'controller' || n.role === 'controller+worker';
+        const isWork = n.role === 'worker'      || n.role === 'controller+worker';
+
+        const flags = [];
+        if (isCtrl) {
+          const sorted = [...form.disabledComponents].sort();
+          sorted.forEach(c => flags.push(`    - --disable-components=${c}`));
+          if (form.noTaints) flags.push('    - --no-taints');
+        }
+        if (isWork) flags.push(`    - --kubelet-extra-args="--cluster-dns=${dnsIP}"`);
+        if (form.debugEnabled) flags.push('    - --debug');
+
+        const hookBlock = isWork ? `
+    hooks:
+      apply:
+        after:
+          - sudo k0s ctr images prune --all` : '';
+
+        return `  - ssh:
+      address: ${ip}
+      user: ${user}
+      port: ${port}
+      keyPath: ~/.ssh/id_rsa
+    role: ${n.role}
+    installFlags:
+${flags.join('\n')}
+    uploadBinary: false
+    k0sDownloadURL: https://${repo}/repository/github/k0sproject/k0s/releases/download/%v/k0s-%v-%p%x
+    privateInterface: ${ni}
+    files:
+      - name: bundle-file
+        src: https://${repo}/repository/github/k0sproject/k0s/releases/download/%v/k0s-airgap-bundle-%v-%p%x
+        dstDir: /var/lib/k0s/images/
+        perm: 0755${hookBlock}`;
+      }).join('\n');
+
+      // ── k0sctl Options ────────────────────────────────────────
+      const skipLine    = (form.optDrainSkipWaitTimeout && form.optDrainSkipWaitTimeout.trim() && form.optDrainSkipWaitTimeout.trim() !== '0s')
+        ? `\n      skipWaitForDeleteTimeout: ${form.optDrainSkipWaitTimeout.trim()}` : '';
+      const podSelLine  = (form.optDrainPodSelector && form.optDrainPodSelector.trim())
+        ? `\n      podSelector: "${form.optDrainPodSelector.trim()}"` : '';
+
+      const optionsBlock = `  options:
+    wait:
+      enabled: ${form.optWaitEnabled}
+    drain:
+      enabled: ${form.optDrainEnabled}
+      gracePeriod: ${f(form.optDrainGracePeriod, '2m')}
+      timeout: ${f(form.optDrainTimeout, '5m')}
+      force: ${form.optDrainForce}
+      ignoreDaemonSets: ${form.optDrainIgnoreDaemonSets}
+      deleteEmptyDirData: ${form.optDrainDeleteEmptyDir}${skipLine}${podSelLine}
+    evictTaint:
+      enabled: ${form.optEvictEnabled}
+      taint: ${f(form.optEvictTaint, 'k0sctl.k0sproject.io/evict=true')}
+      effect: ${form.optEvictEffect}
+      controllerWorkers: ${form.optEvictControllerWorkers}
+    concurrency:
+      limit: ${f(form.optConcurrencyLimit, '30')}
+      workerDisruptionPercent: ${f(form.optConcurrencyWorkerDisruption, '10')}
+      uploads: ${f(form.optConcurrencyUploads, '6')}`;
+
+      // ── CoreDNS zone files ────────────────────────────────────
+      const validZones = form.zoneFiles.filter(z => z.domain && z.domain.trim());
+
+      // Extra server blocks placed BEFORE the catch-all "." server so they take priority
+      const zoneServerBlocks = validZones.map(z => {
+        const domain = z.domain.trim();
+        const fname  = `${domain}.db`;
+        return `                - zones:
+                  - zone: ${domain}
+                  port: 53
+                  plugins:
+                  - name: errors
+                  - name: log
+                  - name: file
+                    parameters: /etc/coredns/${fname} ${domain}
+`;
+      }).join('');
+
+      // zoneFiles: [] or populated list at the end of CoreDNS values
+      let zoneFilesBlock;
+      if (validZones.length === 0) {
+        zoneFilesBlock = `\n                zoneFiles: []`;
+      } else {
+        const entries = validZones.map(z => {
+          const domain = z.domain.trim();
+          const fname  = `${domain}.db`;
+          const contentLines = (z.contents || '').split('\n')
+            .map(line => `                      ${line}`)
+            .join('\n');
+          return `                  - filename: ${fname}
+                    domain: ${domain}
+                    contents: |
+${contentLines}`;
+        }).join('\n');
+        zoneFilesBlock = `\n                zoneFiles:\n${entries}`;
+      }
+
+      // ── Ceph ─────────────────────────────────────────────────
+      let cephRepo = '';
+      let cephChart = '';
+
+      if (form.cephEnabled) {
+        const clsID   = f(form.cephClusterID,   '<cluster-id>');
+        const token   = f(form.cephAuthToken,   '<auth-token>');
+        const cephVer = f(form.cephCsiVersion,  '3.15.1');
+        const provRep = f(form.cephProvReplicas, '3');
+
+        const monitors = form.cephMonitors.map((m, i) => {
+          const mip   = f(m.ip,   `<mon-${i + 1}-ip>`);
+          const mport = f(m.port, `<mon-${i + 1}-port>`);
+          return `                      - "${mip}:${mport}"`;
+        }).join('\n');
+
+        cephRepo = `\n            - name: ceph-csi
+              url: https://${repo}/ceph`;
+
+        cephChart = `
+            - name: ceph-csi-rbd
+              chartname: ceph-csi/ceph-csi-rbd
+              version: "${cephVer}"
+              timeout: 5m
+              order: 2
+              values: |
+                rbac:
+                  create: true
+                serviceAccounts:
+                  nodeplugin:
+                    create: true
+                  provisioner:
+                    create: true
+                csiConfig:
+                  - clusterID: "${clsID}"
+                    monitors:
+${monitors}
+
+                nodeplugin:
+                  name: nodeplugin
+                  registrar:
+                    image:
+                      repository: ${repo}/sig-storage/csi-node-driver-registrar
+                  plugin:
+                    image:
+                      repository: ${repo}/cephcsi/cephcsi
+                provisioner:
+                  name: provisioner
+                  replicaCount: ${provRep}
+                  strategy:
+                    type: RollingUpdate
+                    rollingUpdate:
+                      maxUnavailable: 50%
+                  provisioner:
+                    image:
+                      repository: ${repo}/sig-storage/csi-provisioner
+                    resources: {}
+                  attacher:
+                    name: attacher
+                    enabled: true
+                    image:
+                      repository: ${repo}/sig-storage/csi-attacher
+                  resizer:
+                    name: resizer
+                    enabled: true
+                    image:
+                      repository: ${repo}/sig-storage/csi-resizer
+                  snapshotter:
+                    image:
+                      repository: ${repo}/sig-storage/csi-snapshotter
+
+                storageClass:
+                  create: true
+                  name: csi-rbd-sc
+                  annotations:
+                    storageclass.kubernetes.io/is-default-class: "true"
+                  clusterID: ${clsID}
+                  pool: kubernetes
+                  provisionerSecret: csi-rbd-secret
+                  provisionerSecretNamespace: ""
+                  controllerExpandSecret: csi-rbd-secret
+                  controllerExpandSecretNamespace: ""
+                  nodeStageSecret: csi-rbd-secret
+                  nodeStageSecretNamespace: ""
+                  fstype: ext4
+                  reclaimPolicy: Delete
+                  allowVolumeExpansion: true
+
+                secret:
+                  create: true
+                  name: csi-rbd-secret
+                  userID: kubernetes
+                  userKey: ${token}
+                kubeletDir: /var/lib/k0s/kubelet
+              namespace: ceph-csi-rbd`;
+      }
+
+      // ── Assemble ──────────────────────────────────────────────
+      return `apiVersion: k0sctl.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: k0s-cluster
+  user: admin
+spec:
+  hosts:
+${allHosts}
+${optionsBlock}
+  k0s:
+    version: ${ver}
+    config:
+      spec:
+        api:
+          sans:
+          - ${vip}
+        network:
+          provider: calico
+          calico:
+            wireguard: ${form.wireguard}
+          nodeLocalLoadBalancing:
+            enabled: true
+            type: EnvoyProxy
+          controlPlaneLoadBalancing:
+            enabled: true
+            type: Keepalived
+            keepalived:
+              vrrpInstances:
+              - virtualIPs: ["${vip}/32"]
+                authPass: "${pass}"
+              virtualServers:
+              - ipAddress: "${vip}"
+        images:
+          default_pull_policy: ${form.imagePullPolicy}
+        telemetry:
+          enabled: ${form.telemetryEnabled}
+        extensions:
+          helm:
+            concurrencyLevel: 1
+            repositories:
+            - name: coredns
+              url: https://${repo}/coredns${cephRepo}
+            charts:
+            - name: coredns
+              chartname: coredns/coredns
+              version: "${dnsVer}"
+              timeout: 5m
+              order: 1
+              values: |
+                image:
+                  repository: ${repo}/coredns/coredns
+                replicaCount: ${dnsRep}
+                servers:
+${zoneServerBlocks}                - zones:
+                  - zone: .
+                  port: 53
+                  # -- expose the service on a different port
+                  # servicePort: 5353
+                  # If serviceType is nodePort you can specify nodePort here
+                  # nodePort: 30053
+                  # hostPort: 53
+                  plugins:
+                  - name: errors
+                  # Serves a /health endpoint on :8080, required for livenessProbe
+                  - name: health
+                    configBlock: |-
+                      lameduck 10s
+                  # Serves a /ready endpoint on :8181, required for readinessProbe
+                  - name: ready
+                  # Required to query kubernetes API for data
+                  - name: kubernetes
+                    parameters: cluster.local in-addr.arpa
+                    configBlock: |-
+                      pods insecure
+                      fallthrough in-addr.arpa
+                      ttl 5
+                  # Serves a /metrics endpoint on :9153, required for serviceMonitor
+                  - name: prometheus
+                    parameters: 0.0.0.0:9153
+                  - name: forward
+                    parameters: . /etc/resolv.conf
+                  - name: cache
+                    parameters: 5
+                  - name: loop
+                  - name: reload
+                  - name: loadbalance
+                livenessProbe:
+                  enabled: true
+                  initialDelaySeconds: 60
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 5
+                  successThreshold: 1
+                readinessProbe:
+                  enabled: true
+                  initialDelaySeconds: 30
+                  periodSeconds: 2
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+                  successThreshold: 1
+                podDisruptionBudget: {}
+                autoscaler:
+                  enabled: false
+                serviceType: "ClusterIP"
+                service:
+                  clusterIP: "${dnsIP}"${zoneFilesBlock}
+              namespace: kube-system${cephChart}`;
+    });
+
+    async function copyYaml() {
+      try {
+        await navigator.clipboard.writeText(generatedYaml.value);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = generatedYaml.value;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      copied.value = true;
+      setTimeout(() => { copied.value = false; }, 2000);
+    }
+
+    function downloadYaml() {
+      const blob = new Blob([generatedYaml.value], { type: 'text/yaml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cluster-definition.yaml';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    return {
+      ALL_COMPONENTS, form, open, copied,
+      k0sVersions, k0sVersionsLoading, k0sVersionsFailed,
+      toggle, addNode, removeNode, addMon, removeMon, addZoneFile, removeZoneFile,
+      roleClass, controllerCount, hasDangerousComponents,
+      computedDnsIP, zonePlaceholder, generatedYaml, copyYaml, downloadYaml,
+    };
+  },
+}).mount('#app');
+</script>
+</body>
+</html>

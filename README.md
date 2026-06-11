@@ -80,6 +80,7 @@ sudo bash -c "printf '%s\n' 'fs.inotify.max_user_instances = 1280' 'fs.inotify.m
 | `<master-1-ip>` … `<master-3-ip>`   | IP addresses of control‑plane nodes (numbered 1–3)           |
 | `<worker-1-ip>` … `<worker-3-ip>`   | IP addresses of worker nodes (numbered 1–3)                  |
 | `<ssh-user>`                         | Linux user for k0sctl SSH connections                        |
+| `<ssh-port>`                         | SSH port for k0sctl connections (default 22)                 |
 | `<local-repo>`                       | Base URL of Nexus mirror for GitHub artifacts & OCI images   |
 | `<keepalive-vip>`                    | Virtual IP for external kubectl/API‑server access            |
 | `<keepalive-auth-pass>`              | Password for Keepalived VRRP authentication                  |

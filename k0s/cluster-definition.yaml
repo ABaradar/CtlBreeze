@@ -8,7 +8,7 @@ spec:
   - ssh:
       address: <master-1-ip>
       user: <ssh-user>
-      port: 22
+      port: <ssh-port>
       keyPath: ~/.ssh/id_rsa
     role: controller
     installFlags:
@@ -27,7 +27,7 @@ spec:
   - ssh:
       address: <master-2-ip>
       user: <ssh-user>
-      port: 22
+      port: <ssh-port>
       keyPath: ~/.ssh/id_rsa
     role: controller
     installFlags:
@@ -46,7 +46,7 @@ spec:
   - ssh:
       address: <master-3-ip>
       user: <ssh-user>
-      port: 22
+      port: <ssh-port>
       keyPath: ~/.ssh/id_rsa
     role: controller
     installFlags:
@@ -65,7 +65,7 @@ spec:
   - ssh:
       address: <worker-1-ip>
       user: <ssh-user>
-      port: 22
+      port: <ssh-port>
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
@@ -86,7 +86,7 @@ spec:
   - ssh:
       address: <worker-2-ip>
       user: <ssh-user>
-      port: 22
+      port: <ssh-port>
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:
@@ -107,7 +107,7 @@ spec:
   - ssh:
       address: <worker-3-ip>
       user: <ssh-user>
-      port: 22
+      port: <ssh-port>
       keyPath: ~/.ssh/id_rsa
     role: worker
     installFlags:

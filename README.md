@@ -2,6 +2,8 @@
 
 **CtlBreeze** is a declarative Kubernetes deployment designed for minimal maintenance and airgap environments. It leverages [k0s](https://k0sproject.io/) and [k0sctl](https://github.com/k0sproject/k0sctl) for cluster provisioning and upgrades, ensuring an easy and automated setup.
 
+**[Interactive Config Generator →](https://abaradar.github.io/CtlBreeze/)**
+
 ---
 
 ## Key Features
@@ -73,7 +75,9 @@ sudo bash -c "printf '%s\n' 'fs.inotify.max_user_instances = 1280' 'fs.inotify.m
 
 # TLDR
 
-*  Fill in the placeholders in your cluster‑definition and .gitlab‑ci, and you’re ready to deploy:
+> **Use the [interactive config generator](https://abaradar.github.io/CtlBreeze/) to fill in all options and generate your `cluster-definition.yaml` — no manual YAML editing required.**
+
+*  Or fill in the placeholders manually in your cluster‑definition and .gitlab‑ci:
 
 | Placeholder                          | Description                                                   |
 | ------------------------------------ | ------------------------------------------------------------- |
